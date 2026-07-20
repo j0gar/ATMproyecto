@@ -1,4 +1,4 @@
-# M&J Core v0.3.1 — Foundation
+# M&J Core v0.3.2 — Foundation
 
 La primera versión con arquitectura modular real.
 
@@ -80,3 +80,14 @@ La v0.4 estará centrada en el inventario conectado al Storage Controller de Fun
 - Emblema hexagonal gris con letras M y J.
 - Barra de carga animada de aproximadamente 2,7 segundos.
 - Transición automática al escritorio.
+
+
+## Cambio v0.3.2
+
+- El botón ACTUALIZAR ya permite instalar la actualización desde el monitor.
+- Ya no es necesario escribir `mj update`.
+- Muestra versión instalada y versión disponible.
+- Botón táctil `INSTALAR AHORA`.
+- Barra de progreso por archivos.
+- Reinicio automático al terminar.
+- Los errores se muestran en la propia pantalla.

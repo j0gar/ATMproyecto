@@ -13,7 +13,10 @@ end
 local function writeFile(path, content)
     ensureParent(path)
     local file, err = fs.open(path, "w")
-    if not file then return false, err end
+    if not file then
+        return false, err or ("No se pudo escribir " .. path)
+    end
+
     file.write(content)
     file.close()
     return true
@@ -21,22 +24,25 @@ end
 
 local function versionParts(version)
     local parts = {}
+
     for number in tostring(version):gmatch("%d+") do
         table.insert(parts, tonumber(number))
     end
+
     return parts
 end
 
 local function compareVersions(a, b)
-    local av = versionParts(a)
-    local bv = versionParts(b)
-    local length = math.max(#av, #bv)
+    local left = versionParts(a)
+    local right = versionParts(b)
+    local length = math.max(#left, #right)
 
     for i = 1, length do
-        local left = av[i] or 0
-        local right = bv[i] or 0
-        if left < right then return -1 end
-        if left > right then return 1 end
+        local l = left[i] or 0
+        local r = right[i] or 0
+
+        if l < r then return -1 end
+        if l > r then return 1 end
     end
 
     return 0
@@ -44,10 +50,16 @@ end
 
 function updater.check()
     local remote, err = github.getJSON(config, "version.json")
-    if not remote then return nil, err end
+    if not remote then
+        return nil, err
+    end
+
+    if not remote.version then
+        return nil, "version.json no contiene una version"
+    end
 
     return {
-        current = config.version,
+        current = tostring(config.version),
         latest = tostring(remote.version),
         available = compareVersions(config.version, remote.version) < 0
     }
@@ -55,17 +67,30 @@ end
 
 function updater.install(onProgress)
     local manifest, err = github.getJSON(config, "manifest.json")
-    if not manifest then return false, err end
+    if not manifest then
+        return false, err
+    end
+
+    if type(manifest.files) ~= "table" then
+        return false, "manifest.json no contiene una lista de archivos"
+    end
 
     local downloaded = {}
 
-    for index, path in ipairs(manifest.files or {}) do
-        if onProgress then onProgress(index, #manifest.files, path) end
+    for index, path in ipairs(manifest.files) do
+        if onProgress then
+            onProgress(index, #manifest.files, path)
+        end
 
         local content, downloadErr = github.get(config, path)
-        if not content then return false, downloadErr end
+        if not content then
+            return false, downloadErr or ("No se pudo descargar " .. path)
+        end
 
-        table.insert(downloaded, {path = path, content = content})
+        table.insert(downloaded, {
+            path = path,
+            content = content
+        })
     end
 
     if fs.exists("/mjcore_backup") then
@@ -86,10 +111,13 @@ function updater.install(onProgress)
 
     for _, item in ipairs(downloaded) do
         local ok, writeErr = writeFile("/" .. item.path, item.content)
-        if not ok then return false, writeErr end
+
+        if not ok then
+            return false, writeErr
+        end
     end
 
-    return true, manifest.version
+    return true, tostring(manifest.version or "desconocida")
 end
 
 function updater.runInteractive()
