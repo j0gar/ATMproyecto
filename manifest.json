@@ -1,13 +1,18 @@
 {
-  "version": "0.2.1",
+  "version": "0.3.0",
   "files": [
     "startup.lua",
     "mj.lua",
+    "version.json",
+    "manifest.json",
     "mjcore/boot.lua",
     "mjcore/desktop.lua",
     "mjcore/core/config.lua",
     "mjcore/core/theme.lua",
     "mjcore/core/ui.lua",
+    "mjcore/core/logger.lua",
+    "mjcore/core/notifications.lua",
+    "mjcore/core/app.lua",
     "mjcore/core/apps.lua",
     "mjcore/core/github.lua",
     "mjcore/core/updater.lua",
@@ -18,6 +23,7 @@
     "mjcore/apps/alarms.lua",
     "mjcore/apps/settings.lua",
     "mjcore/apps/updater.lua",
-    "version.json"
+    "mjcore/data/apps.json",
+    "mjcore/assets/logo.lua"
   ]
 }

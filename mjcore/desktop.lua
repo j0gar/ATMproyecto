@@ -1,35 +1,64 @@
 local config = dofile("/mjcore/core/config.lua")
 local theme = dofile("/mjcore/core/theme.lua")
 local ui = dofile("/mjcore/core/ui.lua")
-local apps = dofile("/mjcore/core/apps.lua")
+local logger = dofile("/mjcore/core/logger.lua")
+local notificationsFactory = dofile("/mjcore/core/notifications.lua")
+local appCore = dofile("/mjcore/core/app.lua")
+local appsCore = dofile("/mjcore/core/apps.lua")
 
 local monitor, monitorName = ui.findMonitor(config.monitorName)
 if not monitor then error("No hay monitor conectado", 0) end
 
 monitor.setTextScale(config.textScale)
 
-local selected = 1
+local notifications = notificationsFactory.new(config, logger)
+local registry = appsCore.loadRegistry()
 local buttons = {}
-local running = true
+local selected = 1
 local redraw = true
+local running = true
+
+local context = {
+    monitor = monitor,
+    monitorName = monitorName,
+    config = config,
+    theme = theme,
+    ui = ui,
+    logger = logger,
+    notifications = notifications
+}
+
+local function iconText(icon)
+    local icons = {
+        inventory = "[#]",
+        players = "[O]",
+        todo = "[=]",
+        energy = "[*]",
+        alarms = "[!]",
+        settings = "[+]",
+        updater = "[^]"
+    }
+    return icons[icon] or "[ ]"
+end
 
 local function buildLayout()
     local w, h = monitor.getSize()
     buttons = {}
 
-    local columns = 2
-    local rows = math.ceil(#apps / columns)
-    local gapX = 3
+    local columns = 3
+    if w < 45 then columns = 2 end
+
+    local rows = math.max(1, math.ceil(#registry / columns))
+    local marginX = 2
+    local gapX = 2
     local gapY = 1
-    local marginX = 3
     local contentTop = 4
     local contentBottom = h - 2
-    local availableW = w - (marginX * 2) - gapX
-    local availableH = contentBottom - contentTop + 1 - ((rows - 1) * gapY)
-    local buttonW = math.floor(availableW / columns)
-    local buttonH = math.max(3, math.floor(availableH / rows))
 
-    for i, app in ipairs(apps) do
+    local buttonW = math.floor((w - marginX * 2 - gapX * (columns - 1)) / columns)
+    local buttonH = math.max(5, math.floor((contentBottom - contentTop + 1 - gapY * (rows - 1)) / rows))
+
+    for i, entry in ipairs(registry) do
         local col = (i - 1) % columns
         local row = math.floor((i - 1) / columns)
 
@@ -38,80 +67,81 @@ local function buildLayout()
             y = contentTop + row * (buttonH + gapY),
             w = buttonW,
             h = buttonH,
-            label = app.label,
-            subtitle = app.subtitle,
-            app = app
+            label = entry.name,
+            subtitle = entry.subtitle,
+            icon = iconText(entry.icon),
+            entry = entry
         })
     end
 end
 
+local function drawTopbar()
+    local w = monitor.getSize()
+    ui.fill(monitor, 1, 1, w, 2, theme.topbar)
+    ui.write(monitor, 2, 1, "M&J CORE", theme.text, theme.topbar)
+    ui.write(monitor, 2, 2, "Foundation v" .. config.version, theme.muted, theme.topbar)
+
+    local timeText = textutils.formatTime(os.time(), true)
+    ui.write(monitor, w - #timeText, 1, timeText, theme.text, theme.topbar)
+end
+
+local function drawFooter()
+    local w, h = monitor.getSize()
+    ui.fill(monitor, 1, h, w, 1, theme.panel)
+    ui.write(monitor, 2, h, "Toca una app | Flechas + Enter", theme.text, theme.panel)
+
+    local status = "SISTEMA OK"
+    ui.write(monitor, w - #status, h, status, theme.success, theme.panel)
+end
+
 local function draw()
-    monitor.setBackgroundColor(theme.background)
+    monitor.setBackgroundColor(theme.desktop)
     monitor.setTextColor(theme.text)
     monitor.clear()
 
-    ui.header(
-        monitor,
-        config.title .. " v" .. config.version,
-        textutils.formatTime(os.time(), true),
-        theme
-    )
+    drawTopbar()
 
     for i, button in ipairs(buttons) do
         ui.button(monitor, button, i == selected, theme)
     end
 
-    ui.footer(monitor, "Toca una app | Flechas + Enter", "SISTEMA OK", theme)
-end
-
-local function showMessage(title, message, color)
-    local w, h = monitor.getSize()
-    local boxW = math.min(w - 6, 48)
-    local boxH = 7
-    local x = math.floor((w - boxW) / 2) + 1
-    local y = math.floor((h - boxH) / 2) + 1
-
-    ui.fill(monitor, x, y, boxW, boxH, theme.panel)
-    ui.center(monitor, y + 1, title, color or theme.accent, theme.panel)
-    ui.write(monitor, x + 2, y + 3, ui.clip(message, boxW - 4), theme.text, theme.panel)
-    ui.write(monitor, x + 2, y + 5, "Toca o pulsa una tecla", theme.muted, theme.panel)
-    os.pullEvent()
-    redraw = true
+    drawFooter()
+    ui.notification(monitor, notifications.current, theme)
 end
 
 local function launch(index)
-    local app = apps[index]
-    if not app then return end
+    local button = buttons[index]
+    if not button then return end
 
-    if not fs.exists(app.path) then
-        showMessage(app.label, "Aplicacion no instalada.", theme.warning)
+    logger.log("Abriendo app: " .. button.entry.name)
+
+    local app, err = appCore.load(button.entry.path, context)
+    if not app then
+        logger.log(err, "ERROR")
+        notifications.push("Error al abrir " .. button.entry.name, "error")
         return
     end
 
-    local ok, result = pcall(function()
-        return dofile(app.path)({
-            monitor = monitor,
-            monitorName = monitorName,
-            ui = ui,
-            theme = theme,
-            config = config
-        })
-    end)
-
+    local ok, runErr = appCore.run(app, context)
     if not ok then
-        showMessage("ERROR EN " .. app.label, tostring(result), theme.danger)
+        logger.log(runErr, "ERROR")
+        notifications.push("La app se ha detenido", "error")
     end
 
     monitor.setTextScale(config.textScale)
-    buildLayout()
     redraw = true
 end
 
 buildLayout()
-draw()
+notifications.push("M&J Core iniciado", "success")
 local timer = os.startTimer(config.refreshSeconds)
 
 while running do
+    if redraw then
+        draw()
+        redraw = false
+    end
+
     local event, a, b, c = os.pullEvent()
 
     if event == "monitor_touch" and a == monitorName then
@@ -123,39 +153,41 @@ while running do
         end
 
     elseif event == "key" then
-        local key = a
-        local columns = 2
+        local columns = 3
+        local w = monitor.getSize()
+        if w < 45 then columns = 2 end
 
-        if key == keys.left and selected > 1 then
+        if a == keys.left and selected > 1 then
             selected = selected - 1
-            redraw = true
-        elseif key == keys.right and selected < #apps then
+        elseif a == keys.right and selected < #buttons then
             selected = selected + 1
-            redraw = true
-        elseif key == keys.up and selected - columns >= 1 then
+        elseif a == keys.up and selected - columns >= 1 then
             selected = selected - columns
-            redraw = true
-        elseif key == keys.down and selected + columns <= #apps then
+        elseif a == keys.down and selected + columns <= #buttons then
             selected = selected + columns
-            redraw = true
-        elseif key == keys.enter or key == keys.space then
+        elseif a == keys.enter or a == keys.space then
             launch(selected)
-        elseif key == keys.q then
+        elseif a == keys.q then
             running = false
         end
+
+        redraw = true
 
     elseif event == "monitor_resize" and a == monitorName then
         monitor.setTextScale(config.textScale)
         buildLayout()
         redraw = true
 
-    elseif event == "timer" and a == timer then
-        redraw = true
-        timer = os.startTimer(config.refreshSeconds)
-    end
-
-    if redraw then
-        draw()
-        redraw = false
+    elseif event == "timer" then
+        if notifications.handleTimer(a) then
+            redraw = true
+        elseif a == timer then
+            timer = os.startTimer(config.refreshSeconds)
+            redraw = true
+        end
     end
 end
+
+logger.log("Escritorio cerrado")
+monitor.setBackgroundColor(colors.black)
+monitor.clear()

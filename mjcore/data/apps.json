@@ -1,0 +1,58 @@
+[
+  {
+    "id": "inventory",
+    "name": "INVENTARIO",
+    "subtitle": "Functional Storage",
+    "icon": "inventory",
+    "path": "/mjcore/apps/inventory.lua",
+    "order": 1
+  },
+  {
+    "id": "players",
+    "name": "JUGADORES",
+    "subtitle": "Mia y J0gar",
+    "icon": "players",
+    "path": "/mjcore/apps/players.lua",
+    "order": 2
+  },
+  {
+    "id": "todo",
+    "name": "TAREAS",
+    "subtitle": "Pendientes",
+    "icon": "todo",
+    "path": "/mjcore/apps/todo.lua",
+    "order": 3
+  },
+  {
+    "id": "energy",
+    "name": "ENERGIA",
+    "subtitle": "Produccion",
+    "icon": "energy",
+    "path": "/mjcore/apps/energy.lua",
+    "order": 4
+  },
+  {
+    "id": "alarms",
+    "name": "ALARMAS",
+    "subtitle": "Avisos",
+    "icon": "alarms",
+    "path": "/mjcore/apps/alarms.lua",
+    "order": 5
+  },
+  {
+    "id": "settings",
+    "name": "AJUSTES",
+    "subtitle": "Sistema",
+    "icon": "settings",
+    "path": "/mjcore/apps/settings.lua",
+    "order": 6
+  },
+  {
+    "id": "updater",
+    "name": "ACTUALIZAR",
+    "subtitle": "GitHub",
+    "icon": "updater",
+    "path": "/mjcore/apps/updater.lua",
+    "order": 7
+  }
+]

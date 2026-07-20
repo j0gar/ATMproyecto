@@ -1,16 +1,18 @@
 return {
     background = colors.black,
+    desktop = colors.black,
+    topbar = colors.blue,
     panel = colors.gray,
-    panelDark = colors.lightGray,
+    panelAlt = colors.lightGray,
     accent = colors.cyan,
-    accent2 = colors.blue,
+    accentDark = colors.blue,
     text = colors.white,
     muted = colors.lightGray,
     success = colors.lime,
     warning = colors.yellow,
     danger = colors.red,
     button = colors.gray,
-    buttonSelected = colors.cyan,
+    buttonHover = colors.lightBlue,
     buttonText = colors.white,
-    buttonSelectedText = colors.black
+    selectedText = colors.black
 }

@@ -1,15 +1,10 @@
-local function requireFile(path)
-    if not fs.exists(path) then
-        error("Falta el archivo: " .. path, 0)
-    end
-    return dofile(path)
-end
+local config = dofile("/mjcore/core/config.lua")
+local theme = dofile("/mjcore/core/theme.lua")
+local ui = dofile("/mjcore/core/ui.lua")
+local logger = dofile("/mjcore/core/logger.lua")
+local logo = dofile("/mjcore/assets/logo.lua")
 
-local config = requireFile("/mjcore/core/config.lua")
-local theme = requireFile("/mjcore/core/theme.lua")
-local ui = requireFile("/mjcore/core/ui.lua")
-
-local monitor = ui.findMonitor(config.monitorName)
+local monitor, monitorName = ui.findMonitor(config.monitorName)
 
 term.setBackgroundColor(colors.black)
 term.setTextColor(colors.white)
@@ -19,55 +14,36 @@ term.setCursorPos(1, 1)
 if not monitor then
     term.setTextColor(colors.red)
     print("M&J Core no encuentra ningun monitor.")
+    logger.log("No se encontro monitor", "ERROR")
     return
 end
 
 monitor.setTextScale(config.textScale)
 monitor.setBackgroundColor(theme.background)
-monitor.setTextColor(theme.text)
 monitor.clear()
 
 local w, h = monitor.getSize()
+local logoTop = math.max(2, math.floor(h / 2) - 7)
 
-local function center(y, text, color)
-    monitor.setTextColor(color or theme.text)
-    monitor.setCursorPos(math.max(1, math.floor((w - #text) / 2) + 1), y)
-    monitor.write(text)
+for i, line in ipairs(logo) do
+    ui.center(monitor, logoTop + i - 1, line, i <= 3 and theme.text or theme.accent, theme.background)
 end
 
-local function progress(y, percent)
-    local width = math.max(10, math.min(w - 12, 40))
-    local x = math.floor((w - width) / 2) + 1
-    local filled = math.floor(width * percent)
-
-    monitor.setCursorPos(x, y)
-    monitor.setBackgroundColor(theme.panel)
-    monitor.write(string.rep(" ", width))
-
-    monitor.setCursorPos(x, y)
-    monitor.setBackgroundColor(theme.accent)
-    monitor.write(string.rep(" ", filled))
-    monitor.setBackgroundColor(theme.background)
-end
-
-center(math.max(2, math.floor(h / 2) - 5), "M&J CORE", theme.accent)
-center(math.max(3, math.floor(h / 2) - 3), "Sistema central de Mia + J0gar", theme.muted)
+ui.center(monitor, logoTop + 7, "M&J CORE", theme.accent, theme.background)
+ui.center(monitor, logoTop + 9, "FOUNDATION v" .. config.version, theme.muted, theme.background)
 
 local steps = {
-    "Detectando monitor",
-    "Cargando interfaz",
+    "Cargando nucleo",
     "Cargando aplicaciones",
-    "Iniciando escritorio"
+    "Preparando escritorio",
+    "Sistema listo"
 }
 
-for i, label in ipairs(steps) do
-    local y = math.max(5, math.floor(h / 2))
-    monitor.setBackgroundColor(theme.background)
-    monitor.setCursorPos(1, y)
-    monitor.clearLine()
-    center(y, label .. "...", theme.text)
-    progress(y + 2, i / #steps)
-    sleep(0.25)
+for i, step in ipairs(steps) do
+    ui.center(monitor, logoTop + 12, step .. "...", theme.text, theme.background)
+    ui.progress(monitor, math.floor(w * 0.2), logoTop + 14, math.floor(w * 0.6), i, #steps, theme)
+    sleep(0.3)
 end
 
+logger.log("Arranque completado en " .. monitorName)
 shell.run("/mjcore/desktop.lua")

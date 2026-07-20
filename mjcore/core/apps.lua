@@ -1,9 +1,33 @@
-return {
-    { id = "inventory", label = "INVENTARIO", subtitle = "Functional Storage", path = "/mjcore/apps/inventory.lua" },
-    { id = "players", label = "JUGADORES", subtitle = "Mia y J0gar", path = "/mjcore/apps/players.lua" },
-    { id = "todo", label = "TAREAS", subtitle = "Lista pendiente", path = "/mjcore/apps/todo.lua" },
-    { id = "energy", label = "ENERGIA", subtitle = "Produccion y carga", path = "/mjcore/apps/energy.lua" },
-    { id = "alarms", label = "ALARMAS", subtitle = "Avisos de la base", path = "/mjcore/apps/alarms.lua" },
-    { id = "settings", label = "AJUSTES", subtitle = "Sistema", path = "/mjcore/apps/settings.lua" },
-    { id = "updater", label = "ACTUALIZAR", subtitle = "GitHub", path = "/mjcore/apps/updater.lua" }
-}
+local apps = {}
+
+function apps.loadRegistry()
+    local path = "/mjcore/data/apps.json"
+    if not fs.exists(path) then
+        return {}
+    end
+
+    local file = fs.open(path, "r")
+    local content = file.readAll()
+    file.close()
+
+    local registry = textutils.unserializeJSON(content)
+    if type(registry) ~= "table" then
+        return {}
+    end
+
+    local result = {}
+
+    for _, entry in ipairs(registry) do
+        if entry.enabled ~= false and entry.path and fs.exists(entry.path) then
+            table.insert(result, entry)
+        end
+    end
+
+    table.sort(result, function(a, b)
+        return (a.order or 999) < (b.order or 999)
+    end)
+
+    return result
+end
+
+return apps

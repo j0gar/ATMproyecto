@@ -1,57 +1,45 @@
-# M&J Core
+# M&J Core v0.3.0 — Foundation
 
-Sistema modular para CC:Tweaked diseñado para un monitor avanzado de 4x4 bloques.
+La primera versión con arquitectura modular real.
 
-## Versión 0.2.1
+## Novedades
 
-Novedades:
+- Nueva pantalla de arranque inspirada en el logo.
+- Escritorio rediseñado.
+- Gestor dinámico de aplicaciones mediante `apps.json`.
+- API base para aplicaciones.
+- Sistema de notificaciones.
+- Logger del sistema.
+- Widgets reutilizables:
+  - Botones
+  - Bordes
+  - Barras de progreso
+  - Diálogos
+  - Notificaciones
+- Copia de seguridad durante las actualizaciones.
+- Comando `mj logs`.
 
-- Instalador desde GitHub.
-- Actualizador automático.
-- Comando `mj`.
-- `manifest.json` para controlar archivos.
-- `version.json` para comprobar versiones.
-- Copia de seguridad antes de actualizar.
-- Aplicación de actualización en el escritorio.
+## Repositorio
 
-## Preparar GitHub
-
-Sube todo el contenido de esta carpeta a la raíz del repositorio:
-
-```text
-MJ-Core/
-├── install.lua
-├── manifest.json
-├── version.json
-├── startup.lua
-├── mj.lua
-└── mjcore/
-```
-
-El repositorio debe ser público para que CC:Tweaked pueda descargar los archivos sin autenticación.
-
-El proyecto apunta a:
+Este paquete está configurado para:
 
 ```text
-https://github.com/j0gar/ATMproyecto
+j0gar/ATMproyecto
 ```
 
-Si tu nombre de usuario es distinto, cambia `owner` en:
-
-```text
-install.lua
-mjcore/core/config.lua
-```
-
-## Instalación en CC:Tweaked
-
-Con HTTP activado:
+## Instalación nueva
 
 ```text
 wget run https://raw.githubusercontent.com/j0gar/ATMproyecto/main/install.lua
 ```
 
-Después se reiniciará solo.
+## Actualizar una instalación existente
+
+Después de subir estos archivos a GitHub:
+
+```text
+mj update
+```
 
 ## Comandos
 
@@ -59,24 +47,28 @@ Después se reiniciará solo.
 mj start
 mj update
 mj version
+mj logs
 mj help
 ```
 
-## Actualizaciones
+## Registro de aplicaciones
 
-Cuando subas una versión nueva a GitHub:
-
-1. Cambia la versión en `version.json`.
-2. Cambia `version` en `mjcore/core/config.lua`.
-3. Añade cualquier archivo nuevo a `manifest.json`.
-4. En Minecraft ejecuta:
+Las aplicaciones se declaran en:
 
 ```text
-mj update
+/mjcore/data/apps.json
 ```
 
-Las versiones anteriores se guardan temporalmente en:
+Añadir una nueva aplicación ya no requiere modificar el escritorio.
 
-```text
-/mjcore_backup
-```
+## Controles
+
+- Tocar una aplicación: abrir.
+- Flechas: seleccionar.
+- Enter o espacio: abrir.
+- Escape o retroceso: volver desde una app.
+- Q: cerrar el escritorio.
+
+## Próxima versión
+
+La v0.4 estará centrada en el inventario conectado al Storage Controller de Functional Storage.

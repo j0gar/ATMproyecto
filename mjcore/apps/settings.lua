@@ -1,19 +1,36 @@
-return function(ctx)
-    local monitor = ctx.monitor
-    local ui = ctx.ui
-    local theme = ctx.theme
-    local config = ctx.config
-    local w, h = monitor.getSize()
+return function(context)
+    local app = {
+        id = "settings",
+        title = "AJUSTES"
+    }
 
-    monitor.setBackgroundColor(theme.background)
-    monitor.clear()
-    ui.header(monitor, "AJUSTES", "v" .. config.version, theme)
+    function app:draw(ctx)
+        local m = ctx.monitor
+        local ui = ctx.ui
+        local t = ctx.theme
+        local c = ctx.config
+        local w, h = m.getSize()
 
-    ui.write(monitor, 4, 5, "Monitor: " .. tostring(ctx.monitorName), theme.text, theme.background)
-    ui.write(monitor, 4, 7, "Escala: " .. tostring(config.textScale), theme.text, theme.background)
-    ui.write(monitor, 4, 9, "Resolucion: " .. w .. "x" .. h, theme.text, theme.background)
-    ui.write(monitor, 4, 11, "GitHub: " .. config.github.owner .. "/" .. config.github.repo, theme.text, theme.background)
+        m.setBackgroundColor(t.background)
+        m.clear()
 
-    ui.footer(monitor, "Toca para volver", "M&J CORE", theme)
-    os.pullEvent()
+        ui.fill(m, 1, 1, w, 2, t.topbar)
+        ui.write(m, 2, 1, self.title, t.text, t.topbar)
+        ui.write(m, 2, 2, "M&J Core", t.muted, t.topbar)
+
+        ui.write(m, 4, 5, "Version: " .. c.version, t.text, t.background)
+        ui.write(m, 4, 7, "Nombre: " .. c.title, t.text, t.background)
+        ui.write(m, 4, 9, "Monitor: " .. ctx.monitorName, t.text, t.background)
+        ui.write(m, 4, 11, "Escala: " .. c.textScale, t.text, t.background)
+        ui.write(m, 4, 13, "GitHub: " .. c.github.owner .. "/" .. c.github.repo, t.text, t.background)
+
+        ui.fill(m, 1, h, w, 1, t.panel)
+        ui.write(m, 2, h, "Toca o pulsa ESC para volver", t.text, t.panel)
+    end
+
+    function app:touch()
+        return "close"
+    end
+
+    return app
 end

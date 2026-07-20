@@ -1,5 +1,6 @@
 return {
-    version = "0.2.1",
+    version = "0.3.0",
+    codename = "Foundation",
 
     github = {
         owner = "j0gar",
@@ -11,5 +12,7 @@ return {
     textScale = 0.5,
     title = "M&J CORE",
     ownerLine = "Mia + J0gar",
-    refreshSeconds = 1
+    refreshSeconds = 1,
+    notificationSeconds = 4,
+    logMaxLines = 300
 }
