@@ -1,6 +1,6 @@
 return {
-    version = "0.4.0",
-    codename = "TouchUI",
+    version = "0.4.3",
+    codename = "Close Buttons",
 
     github = {
         owner = "j0gar",

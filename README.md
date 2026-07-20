@@ -1,49 +1,24 @@
-# M&J Core v0.4.0 — TouchUI
+# M&J Core v0.4.3 — Botón de cierre
 
-La primera versión pensada para manejarse completamente desde el monitor táctil.
+## Cambio principal
 
-## Cambios principales
+Todas las aplicaciones muestran ahora un botón rojo `X` en la esquina superior derecha.
 
-- Botones del escritorio más pequeños y compactos.
-- Tarjetas de 3 columnas con mejor aprovechamiento del monitor 4×4.
-- Fondo técnico discreto y barra de estado inferior.
-- Aplicación de inventario real para Functional Storage.
-- Inventario con:
-  - paginación táctil;
-  - ordenar por cantidad;
-  - ordenar por nombre;
-  - ordenar por mod;
-  - sincronización manual;
-  - cantidades combinadas por objeto.
-- Nueva aplicación Sistema.
-- Reinicio y apagado desde el monitor.
-- Actualizador gráfico mantenido.
-- Uso diario sin comandos ni teclado.
+Al tocarlo:
 
-## Instalación
+- se cierra la aplicación actual;
+- se vuelve al escritorio;
+- ya no es necesario tocar la barra superior.
 
-Sube el contenido de este ZIP a la raíz del repositorio y usa una vez el botón ACTUALIZAR de la versión instalada.
+El botón forma parte del núcleo de interfaz, por lo que las aplicaciones nuevas pueden añadirlo usando:
 
-Después de actualizar, M&J Core arrancará como v0.4.0.
-
-## Estructura esperada en GitHub
-
-```text
-ATMproyecto/
-├── install.lua
-├── manifest.json
-├── version.json
-├── startup.lua
-├── mj.lua
-└── mjcore/
+```lua
+table.insert(self.buttons, ui.closeButton(monitor, theme))
 ```
 
-## Notas del inventario
+Esta versión mantiene:
 
-El sistema busca primero un periférico de tipo:
-
-```text
-functionalstorage:storage_controller
-```
-
-También intenta encontrar automáticamente un inventario compatible como alternativa.
+- tareas separadas de J0gar y Mia;
+- inventario con texto grande;
+- detector de Mia por coordenadas;
+- mensajes diarios rotatorios.

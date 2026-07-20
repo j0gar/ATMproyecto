@@ -1,5 +1,5 @@
 {
-  "version": "0.4.0",
+  "version": "0.4.3",
   "files": [
     "startup.lua",
     "mj.lua",
@@ -26,6 +26,11 @@
     "mjcore/data/apps.json",
     "mjcore/assets/logo.lua",
     "mjcore/core/inventory.lua",
-    "mjcore/apps/system.lua"
+    "mjcore/apps/system.lua",
+    "mjcore/data/t-J0gar.lua",
+    "mjcore/data/t-Mia.lua",
+    "mjcore/core/mia_detector.lua",
+    "mjcore/data/mia_detector.lua",
+    "mjcore/data/m-Mia.lua"
   ]
 }

@@ -16,6 +16,7 @@ return function(context)
 
         ui.fill(m, 1, 1, w, 2, t.topbar)
         ui.write(m, 2, 1, self.title, t.text, t.topbar)
+        table.insert(self.buttons, ui.closeButton(m, t))
         ui.write(m, 2, 2, "M&J Core", t.muted, t.topbar)
 
         ui.write(m, 4, 5, "Version: " .. c.version, t.text, t.background)

@@ -5,6 +5,7 @@ local logger = dofile("/mjcore/core/logger.lua")
 local notificationsFactory = dofile("/mjcore/core/notifications.lua")
 local appCore = dofile("/mjcore/core/app.lua")
 local appsCore = dofile("/mjcore/core/apps.lua")
+local miaDetector = dofile("/mjcore/core/mia_detector.lua")
 
 local monitor, monitorName = ui.findMonitor(config.monitorName)
 if not monitor then error("No hay monitor conectado", 0) end
@@ -178,6 +179,8 @@ local function launch(index)
 end
 
 buildLayout()
+miaDetector.reload()
+miaDetector.update(true)
 notifications.push("Touch UI cargado", "success")
 local timer = os.startTimer(config.refreshSeconds)
 
@@ -212,6 +215,7 @@ while running do
         if notifications.handleTimer(a) then
             redraw = true
         elseif a == timer then
+            miaDetector.update(false)
             timer = os.startTimer(config.refreshSeconds)
             redraw = true
         end

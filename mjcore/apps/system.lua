@@ -18,6 +18,7 @@ return function(context)
 
         ui.fill(m, 1, 1, w, 2, t.topbar)
         ui.write(m, 2, 1, self.title, t.text, t.topbar)
+        table.insert(self.buttons, ui.closeButton(m, t))
         ui.write(m, w - 13, 1, "v" .. ctx.config.version, t.accent, t.topbar)
 
         ui.write(m, 4, 5, "Monitor", t.accent, t.background)
@@ -65,6 +66,7 @@ return function(context)
         for _, button in ipairs(self.buttons) do
             if x >= button.x and x < button.x + button.w
             and y >= button.y and y < button.y + button.h then
+                if button.id == "close" then return "close" end
                 if button.id == "logs" then
                     ctx.notifications.push("Logs guardados en el ordenador", "info")
                 elseif button.id == "reboot" then
@@ -76,7 +78,6 @@ return function(context)
             end
         end
 
-        if y <= 2 then return "close" end
     end
 
     return app

@@ -186,4 +186,22 @@ function ui.formatNumber(value)
     return result
 end
 
+
+function ui.closeButton(target, theme)
+    local width = 5
+    local x = select(1, target.getSize()) - width
+    local y = 1
+
+    ui.fill(target, x, y, width, 2, theme.danger)
+    ui.centerInBox(target, x, y, width, 2, "X", colors.white, theme.danger)
+
+    return {
+        id = "close",
+        x = x,
+        y = y,
+        w = width,
+        h = 2
+    }
+end
+
 return ui
