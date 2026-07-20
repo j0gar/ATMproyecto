@@ -1,4 +1,4 @@
-# M&J Core v0.3.0 — Foundation
+# M&J Core v0.3.1 — Foundation
 
 La primera versión con arquitectura modular real.
 
@@ -72,3 +72,11 @@ Añadir una nueva aplicación ya no requiere modificar el escritorio.
 ## Próxima versión
 
 La v0.4 estará centrada en el inventario conectado al Storage Controller de Functional Storage.
+
+
+## Cambio v0.3.1
+
+- Nuevo logo pixel art en el arranque.
+- Emblema hexagonal gris con letras M y J.
+- Barra de carga animada de aproximadamente 2,7 segundos.
+- Transición automática al escritorio.

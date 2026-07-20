@@ -4,6 +4,9 @@ local ui = dofile("/mjcore/core/ui.lua")
 local logger = dofile("/mjcore/core/logger.lua")
 local logo = dofile("/mjcore/assets/logo.lua")
 
+local BOOT_DURATION = 2.7
+local BAR_STEPS = 27
+
 local monitor, monitorName = ui.findMonitor(config.monitorName)
 
 term.setBackgroundColor(colors.black)
@@ -20,30 +23,97 @@ end
 
 monitor.setTextScale(config.textScale)
 monitor.setBackgroundColor(theme.background)
+monitor.setTextColor(theme.text)
 monitor.clear()
 
-local w, h = monitor.getSize()
-local logoTop = math.max(2, math.floor(h / 2) - 7)
+local function drawPixelLogo(target)
+    local screenW, screenH = target.getSize()
+    local pixelW = logo.pixelWidth or 1
+    local pixelH = logo.pixelHeight or 1
+    local logoW = #logo.pixels[1] * pixelW
+    local logoH = #logo.pixels * pixelH
 
-for i, line in ipairs(logo) do
-    ui.center(monitor, logoTop + i - 1, line, i <= 3 and theme.text or theme.accent, theme.background)
+    local startX = math.max(1, math.floor((screenW - logoW) / 2) + 1)
+    local startY = math.max(2, math.floor((screenH - logoH) / 2) - 4)
+
+    local palette = {
+        H = colors.gray,
+        M = colors.lightGray,
+        J = colors.cyan,
+        C = colors.blue
+    }
+
+    for row, line in ipairs(logo.pixels) do
+        for column = 1, #line do
+            local symbol = line:sub(column, column)
+            local color = palette[symbol]
+
+            if color then
+                ui.fill(
+                    target,
+                    startX + (column - 1) * pixelW,
+                    startY + (row - 1) * pixelH,
+                    pixelW,
+                    pixelH,
+                    color
+                )
+            end
+        end
+    end
+
+    return startY + logoH
 end
 
-ui.center(monitor, logoTop + 7, "M&J CORE", theme.accent, theme.background)
-ui.center(monitor, logoTop + 9, "FOUNDATION v" .. config.version, theme.muted, theme.background)
+local function drawLoadingBar(target, y, progress)
+    local screenW = target.getSize()
+    local barW = math.max(20, math.floor(screenW * 0.58))
+    local x = math.floor((screenW - barW) / 2) + 1
+    local filled = math.floor(barW * progress)
 
-local steps = {
-    "Cargando nucleo",
-    "Cargando aplicaciones",
-    "Preparando escritorio",
-    "Sistema listo"
-}
+    ui.fill(target, x, y, barW, 1, theme.panel)
 
-for i, step in ipairs(steps) do
-    ui.center(monitor, logoTop + 12, step .. "...", theme.text, theme.background)
-    ui.progress(monitor, math.floor(w * 0.2), logoTop + 14, math.floor(w * 0.6), i, #steps, theme)
-    sleep(0.3)
+    if filled > 0 then
+        ui.fill(target, x, y, filled, 1, theme.accent)
+    end
+
+    return x, barW
 end
 
-logger.log("Arranque completado en " .. monitorName)
+local logoBottom = drawPixelLogo(monitor)
+local screenW, screenH = monitor.getSize()
+local titleY = math.min(screenH - 6, logoBottom + 1)
+local barY = math.min(screenH - 3, titleY + 3)
+
+ui.center(monitor, titleY, "M&J CORE", theme.accent, theme.background)
+ui.center(
+    monitor,
+    titleY + 1,
+    "FOUNDATION v" .. config.version,
+    theme.muted,
+    theme.background
+)
+
+for step = 0, BAR_STEPS do
+    local progress = step / BAR_STEPS
+    drawLoadingBar(monitor, barY, progress)
+
+    local status
+    if progress < 0.30 then
+        status = "INICIANDO NUCLEO"
+    elseif progress < 0.62 then
+        status = "CARGANDO APLICACIONES"
+    elseif progress < 0.90 then
+        status = "PREPARANDO ESCRITORIO"
+    else
+        status = "SISTEMA LISTO"
+    end
+
+    local statusY = math.min(screenH - 1, barY + 2)
+    ui.fill(monitor, 1, statusY, screenW, 1, theme.background)
+    ui.center(monitor, statusY, status, theme.text, theme.background)
+
+    sleep(BOOT_DURATION / BAR_STEPS)
+end
+
+logger.log("Arranque visual completado en " .. monitorName)
 shell.run("/mjcore/desktop.lua")
