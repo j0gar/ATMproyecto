@@ -2,7 +2,7 @@
   {
     "id": "inventory",
     "name": "INVENTARIO",
-    "subtitle": "Functional Storage",
+    "subtitle": "Storage real",
     "icon": "inventory",
     "path": "/mjcore/apps/inventory.lua",
     "order": 1
@@ -10,7 +10,7 @@
   {
     "id": "players",
     "name": "JUGADORES",
-    "subtitle": "Mia y J0gar",
+    "subtitle": "Presencia",
     "icon": "players",
     "path": "/mjcore/apps/players.lua",
     "order": 2
@@ -40,12 +40,20 @@
     "order": 5
   },
   {
+    "id": "system",
+    "name": "SISTEMA",
+    "subtitle": "Control total",
+    "icon": "system",
+    "path": "/mjcore/apps/system.lua",
+    "order": 6
+  },
+  {
     "id": "settings",
     "name": "AJUSTES",
-    "subtitle": "Sistema",
+    "subtitle": "Configuracion",
     "icon": "settings",
     "path": "/mjcore/apps/settings.lua",
-    "order": 6
+    "order": 7
   },
   {
     "id": "updater",
@@ -53,6 +61,6 @@
     "subtitle": "GitHub",
     "icon": "updater",
     "path": "/mjcore/apps/updater.lua",
-    "order": 7
+    "order": 8
   }
 ]

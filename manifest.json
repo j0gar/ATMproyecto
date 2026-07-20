@@ -1,5 +1,5 @@
 {
-  "version": "0.3.2",
+  "version": "0.4.0",
   "files": [
     "startup.lua",
     "mj.lua",
@@ -24,6 +24,8 @@
     "mjcore/apps/settings.lua",
     "mjcore/apps/updater.lua",
     "mjcore/data/apps.json",
-    "mjcore/assets/logo.lua"
+    "mjcore/assets/logo.lua",
+    "mjcore/core/inventory.lua",
+    "mjcore/apps/system.lua"
   ]
 }

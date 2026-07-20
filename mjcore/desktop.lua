@@ -28,35 +28,34 @@ local context = {
     notifications = notifications
 }
 
-local function iconText(icon)
-    local icons = {
-        inventory = "[#]",
-        players = "[O]",
-        todo = "[=]",
-        energy = "[*]",
-        alarms = "[!]",
-        settings = "[+]",
-        updater = "[^]"
-    }
-    return icons[icon] or "[ ]"
-end
+local icons = {
+    inventory = "[#]",
+    players = "[O]",
+    todo = "[=]",
+    energy = "[*]",
+    alarms = "[!]",
+    settings = "[+]",
+    updater = "[^]",
+    system = "[S]",
+    favorites = "[F]"
+}
 
 local function buildLayout()
     local w, h = monitor.getSize()
     buttons = {}
 
     local columns = 3
-    if w < 45 then columns = 2 end
-
-    local rows = math.max(1, math.ceil(#registry / columns))
     local marginX = 2
-    local gapX = 2
+    local gapX = 1
     local gapY = 1
     local contentTop = 4
-    local contentBottom = h - 2
+    local footerTop = h - 5
+    local availableHeight = footerTop - contentTop
 
+    local rows = math.max(1, math.ceil(#registry / columns))
     local buttonW = math.floor((w - marginX * 2 - gapX * (columns - 1)) / columns)
-    local buttonH = math.max(5, math.floor((contentBottom - contentTop + 1 - gapY * (rows - 1)) / rows))
+    local buttonH = math.max(4, math.floor((availableHeight - gapY * (rows - 1)) / rows))
+    buttonH = math.min(buttonH, 6)
 
     for i, entry in ipairs(registry) do
         local col = (i - 1) % columns
@@ -69,43 +68,89 @@ local function buildLayout()
             h = buttonH,
             label = entry.name,
             subtitle = entry.subtitle,
-            icon = iconText(entry.icon),
+            icon = icons[entry.icon] or "[ ]",
             entry = entry
         })
+    end
+end
+
+local function drawBackground()
+    local w, h = monitor.getSize()
+    monitor.setBackgroundColor(theme.desktop)
+    monitor.clear()
+
+    for y = 3, h - 6, 2 do
+        for x = 1, w, 4 do
+            ui.write(monitor, x, y, ".", colors.gray, theme.desktop)
+        end
     end
 end
 
 local function drawTopbar()
     local w = monitor.getSize()
     ui.fill(monitor, 1, 1, w, 2, theme.topbar)
-    ui.write(monitor, 2, 1, "M&J CORE", theme.text, theme.topbar)
-    ui.write(monitor, 2, 2, "Foundation v" .. config.version, theme.muted, theme.topbar)
+    ui.write(monitor, 2, 1, "<> M&J CORE", theme.text, theme.topbar)
+    ui.write(monitor, 2, 2, "TOUCH UI", theme.muted, theme.topbar)
 
-    local timeText = textutils.formatTime(os.time(), true)
-    ui.write(monitor, w - #timeText, 1, timeText, theme.text, theme.topbar)
+    local version = "v" .. config.version
+    local clock = textutils.formatTime(os.time(), true)
+    ui.write(monitor, w - #clock - #version - 3, 1, clock, theme.text, theme.topbar)
+    ui.write(monitor, w - #version, 1, version, theme.accent, theme.topbar)
 end
 
-local function drawFooter()
-    local w, h = monitor.getSize()
-    ui.fill(monitor, 1, h, w, 1, theme.panel)
-    ui.write(monitor, 2, h, "Toca una app | Flechas + Enter", theme.text, theme.panel)
+local function drawCards()
+    for i, button in ipairs(buttons) do
+        local border = i == selected and theme.accent or theme.panelAlt
+        ui.fill(monitor, button.x, button.y, button.w, button.h, theme.panel)
+        ui.border(monitor, button.x, button.y, button.w, button.h, border, theme.panel)
 
-    local status = "SISTEMA OK"
-    ui.write(monitor, w - #status, h, status, theme.success, theme.panel)
+        ui.write(monitor, button.x + 2, button.y + 1, button.icon, theme.accent, theme.panel)
+        ui.write(
+            monitor,
+            button.x + 7,
+            button.y + 1,
+            ui.clip(button.label, button.w - 9),
+            theme.text,
+            theme.panel
+        )
+
+        if button.h >= 4 then
+            ui.write(
+                monitor,
+                button.x + 2,
+                button.y + 2,
+                ui.clip(button.subtitle or "", button.w - 4),
+                theme.muted,
+                theme.panel
+            )
+        end
+    end
+end
+
+local function drawStatus()
+    local w, h = monitor.getSize()
+    local y = h - 4
+
+    ui.fill(monitor, 1, y, w, 4, theme.panel)
+    ui.write(monitor, 2, y, "ESTADO", theme.accent, theme.panel)
+    ui.write(monitor, 2, y + 1, "Sistema operativo", theme.text, theme.panel)
+
+    local peripherals = #peripheral.getNames()
+    ui.write(monitor, math.floor(w / 3), y, "PERIFERICOS", theme.accent, theme.panel)
+    ui.write(monitor, math.floor(w / 3), y + 1, tostring(peripherals) .. " conectados", theme.text, theme.panel)
+
+    ui.write(monitor, math.floor(w * 0.67), y, "CONTROL", theme.accent, theme.panel)
+    ui.write(monitor, math.floor(w * 0.67), y + 1, "100% tactil", theme.text, theme.panel)
+
+    ui.fill(monitor, 1, h, w, 1, theme.topbar)
+    ui.write(monitor, 2, h, "Toca una tarjeta para abrir", theme.text, theme.topbar)
 end
 
 local function draw()
-    monitor.setBackgroundColor(theme.desktop)
-    monitor.setTextColor(theme.text)
-    monitor.clear()
-
+    drawBackground()
     drawTopbar()
-
-    for i, button in ipairs(buttons) do
-        ui.button(monitor, button, i == selected, theme)
-    end
-
-    drawFooter()
+    drawCards()
+    drawStatus()
     ui.notification(monitor, notifications.current, theme)
 end
 
@@ -133,7 +178,7 @@ local function launch(index)
 end
 
 buildLayout()
-notifications.push("M&J Core iniciado", "success")
+notifications.push("Touch UI cargado", "success")
 local timer = os.startTimer(config.refreshSeconds)
 
 while running do
@@ -149,29 +194,14 @@ while running do
         if index then
             selected = index
             draw()
+            sleep(0.08)
             launch(index)
         end
 
     elseif event == "key" then
-        local columns = 3
-        local w = monitor.getSize()
-        if w < 45 then columns = 2 end
-
-        if a == keys.left and selected > 1 then
-            selected = selected - 1
-        elseif a == keys.right and selected < #buttons then
-            selected = selected + 1
-        elseif a == keys.up and selected - columns >= 1 then
-            selected = selected - columns
-        elseif a == keys.down and selected + columns <= #buttons then
-            selected = selected + columns
-        elseif a == keys.enter or a == keys.space then
-            launch(selected)
-        elseif a == keys.q then
+        if a == keys.q then
             running = false
         end
-
-        redraw = true
 
     elseif event == "monitor_resize" and a == monitorName then
         monitor.setTextScale(config.textScale)

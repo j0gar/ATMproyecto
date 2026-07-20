@@ -141,4 +141,49 @@ function ui.notification(target, notification, theme)
     ui.write(target, x + 2, y + 1, ui.clip(notification.message, boxW - 4), fg, bg)
 end
 
+
+function ui.card(target, x, y, width, height, title, subtitle, selected, theme)
+    local border = selected and theme.accent or theme.panelAlt
+    local bg = theme.panel
+    local fg = theme.text
+
+    ui.fill(target, x, y, width, height, bg)
+    ui.border(target, x, y, width, height, border, bg)
+
+    if title then
+        ui.write(target, x + 2, y + 1, ui.clip(title, width - 4), fg, bg)
+    end
+
+    if subtitle and height >= 4 then
+        ui.write(target, x + 2, y + 2, ui.clip(subtitle, width - 4), theme.muted, bg)
+    end
+end
+
+function ui.smallButton(target, x, y, width, label, active, theme)
+    local bg = active and theme.accent or theme.button
+    local fg = active and theme.selectedText or theme.buttonText
+    ui.fill(target, x, y, width, 3, bg)
+    ui.centerInBox(target, x, y, width, 3, label, fg, bg)
+end
+
+function ui.centerInBox(target, x, y, width, height, text, fg, bg)
+    local tx = x + math.max(0, math.floor((width - #tostring(text)) / 2))
+    local ty = y + math.floor(height / 2)
+    ui.write(target, tx, ty, ui.clip(text, width), fg, bg)
+end
+
+function ui.formatNumber(value)
+    local number = tonumber(value) or 0
+    local text = tostring(math.floor(number))
+    local result = text
+
+    while true do
+        local nextResult, count = result:gsub("^(-?%d+)(%d%d%d)", "%1.%2")
+        result = nextResult
+        if count == 0 then break end
+    end
+
+    return result
+end
+
 return ui

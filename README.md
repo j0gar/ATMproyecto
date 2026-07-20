@@ -1,93 +1,49 @@
-# M&J Core v0.3.2 — Foundation
+# M&J Core v0.4.0 — TouchUI
 
-La primera versión con arquitectura modular real.
+La primera versión pensada para manejarse completamente desde el monitor táctil.
 
-## Novedades
+## Cambios principales
 
-- Nueva pantalla de arranque inspirada en el logo.
-- Escritorio rediseñado.
-- Gestor dinámico de aplicaciones mediante `apps.json`.
-- API base para aplicaciones.
-- Sistema de notificaciones.
-- Logger del sistema.
-- Widgets reutilizables:
-  - Botones
-  - Bordes
-  - Barras de progreso
-  - Diálogos
-  - Notificaciones
-- Copia de seguridad durante las actualizaciones.
-- Comando `mj logs`.
+- Botones del escritorio más pequeños y compactos.
+- Tarjetas de 3 columnas con mejor aprovechamiento del monitor 4×4.
+- Fondo técnico discreto y barra de estado inferior.
+- Aplicación de inventario real para Functional Storage.
+- Inventario con:
+  - paginación táctil;
+  - ordenar por cantidad;
+  - ordenar por nombre;
+  - ordenar por mod;
+  - sincronización manual;
+  - cantidades combinadas por objeto.
+- Nueva aplicación Sistema.
+- Reinicio y apagado desde el monitor.
+- Actualizador gráfico mantenido.
+- Uso diario sin comandos ni teclado.
 
-## Repositorio
+## Instalación
 
-Este paquete está configurado para:
+Sube el contenido de este ZIP a la raíz del repositorio y usa una vez el botón ACTUALIZAR de la versión instalada.
 
-```text
-j0gar/ATMproyecto
-```
+Después de actualizar, M&J Core arrancará como v0.4.0.
 
-## Instalación nueva
-
-```text
-wget run https://raw.githubusercontent.com/j0gar/ATMproyecto/main/install.lua
-```
-
-## Actualizar una instalación existente
-
-Después de subir estos archivos a GitHub:
+## Estructura esperada en GitHub
 
 ```text
-mj update
+ATMproyecto/
+├── install.lua
+├── manifest.json
+├── version.json
+├── startup.lua
+├── mj.lua
+└── mjcore/
 ```
 
-## Comandos
+## Notas del inventario
+
+El sistema busca primero un periférico de tipo:
 
 ```text
-mj start
-mj update
-mj version
-mj logs
-mj help
+functionalstorage:storage_controller
 ```
 
-## Registro de aplicaciones
-
-Las aplicaciones se declaran en:
-
-```text
-/mjcore/data/apps.json
-```
-
-Añadir una nueva aplicación ya no requiere modificar el escritorio.
-
-## Controles
-
-- Tocar una aplicación: abrir.
-- Flechas: seleccionar.
-- Enter o espacio: abrir.
-- Escape o retroceso: volver desde una app.
-- Q: cerrar el escritorio.
-
-## Próxima versión
-
-La v0.4 estará centrada en el inventario conectado al Storage Controller de Functional Storage.
-
-
-## Cambio v0.3.1
-
-- Nuevo logo pixel art en el arranque.
-- Emblema hexagonal gris con letras M y J.
-- Barra de carga animada de aproximadamente 2,7 segundos.
-- Transición automática al escritorio.
-
-
-## Cambio v0.3.2
-
-- El botón ACTUALIZAR ya permite instalar la actualización desde el monitor.
-- Ya no es necesario escribir `mj update`.
-- Muestra versión instalada y versión disponible.
-- Botón táctil `INSTALAR AHORA`.
-- Barra de progreso por archivos.
-- Reinicio automático al terminar.
-- Los errores se muestran en la propia pantalla.
+También intenta encontrar automáticamente un inventario compatible como alternativa.
