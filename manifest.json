@@ -1,0 +1,23 @@
+{
+  "version": "0.2.1",
+  "files": [
+    "startup.lua",
+    "mj.lua",
+    "mjcore/boot.lua",
+    "mjcore/desktop.lua",
+    "mjcore/core/config.lua",
+    "mjcore/core/theme.lua",
+    "mjcore/core/ui.lua",
+    "mjcore/core/apps.lua",
+    "mjcore/core/github.lua",
+    "mjcore/core/updater.lua",
+    "mjcore/apps/inventory.lua",
+    "mjcore/apps/players.lua",
+    "mjcore/apps/todo.lua",
+    "mjcore/apps/energy.lua",
+    "mjcore/apps/alarms.lua",
+    "mjcore/apps/settings.lua",
+    "mjcore/apps/updater.lua",
+    "version.json"
+  ]
+}
