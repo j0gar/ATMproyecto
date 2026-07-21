@@ -115,11 +115,13 @@ function detector.sendDailyMessage()
     -- antigua sendMessage también existe, pero su segundo argumento debe ser
     -- un texto/prefijo y no una tabla.
     if type(detector.chatBox.sendMessageToPlayer) == "function" then
+        -- En esta version de Advanced Peripherals la llamada compatible es
+        -- sendMessageToPlayer(mensaje, jugador). Un tercer argumento provoca
+        -- que la Chat Box interprete mal la peticion.
         ok, result, err = pcall(
             detector.chatBox.sendMessageToPlayer,
             message,
-            detector.config.playerName,
-            detector.config.chatPrefix or "M&J Core"
+            detector.config.playerName
         )
     elseif type(detector.chatBox.sendMessage) == "function" then
         ok, result, err = pcall(
