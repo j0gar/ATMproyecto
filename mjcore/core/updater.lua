@@ -3,6 +3,13 @@ local updater = {}
 local config = dofile("/mjcore/core/config.lua")
 local github = dofile("/mjcore/core/github.lua")
 
+local PRESERVE_FILES = {
+    ["mjcore/data/m-Mia.lua"] = true,
+    ["mjcore/data/mia_detector.lua"] = true,
+    ["mjcore/data/t-J0gar.lua"] = true,
+    ["mjcore/data/t-Mia.lua"] = true
+}
+
 local function ensureParent(path)
     local parent = fs.getDir(path)
     if parent ~= "" and not fs.exists(parent) then
@@ -110,10 +117,15 @@ function updater.install(onProgress)
     end
 
     for _, item in ipairs(downloaded) do
-        local ok, writeErr = writeFile("/" .. item.path, item.content)
+        local target = "/" .. item.path
+        local preserve = PRESERVE_FILES[item.path] and fs.exists(target)
 
-        if not ok then
-            return false, writeErr
+        if not preserve then
+            local ok, writeErr = writeFile(target, item.content)
+
+            if not ok then
+                return false, writeErr
+            end
         end
     end
 

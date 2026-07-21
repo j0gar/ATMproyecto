@@ -2,6 +2,13 @@ local OWNER = "j0gar"
 local REPO = "ATMproyecto"
 local BRANCH = "main"
 
+local PRESERVE_FILES = {
+    ["mjcore/data/m-Mia.lua"] = true,
+    ["mjcore/data/mia_detector.lua"] = true,
+    ["mjcore/data/t-J0gar.lua"] = true,
+    ["mjcore/data/t-Mia.lua"] = true
+}
+
 local BASE_URL =
     "https://raw.githubusercontent.com/" ..
     OWNER .. "/" .. REPO .. "/" .. BRANCH .. "/"
@@ -38,6 +45,15 @@ local function writeFile(path, content)
 end
 
 local function download(path)
+    local target = "/" .. path
+    if PRESERVE_FILES[path] and fs.exists(target) then
+        write("Conservando " .. path .. "... ")
+        term.setTextColor(colors.yellow)
+        print("PERSONALIZADO")
+        term.setTextColor(colors.white)
+        return true
+    end
+
     write("Descargando " .. path .. "... ")
     local content, err = get(BASE_URL .. path)
 
