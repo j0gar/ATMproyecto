@@ -1,24 +1,14 @@
-# M&J Core v0.4.3 — Botón de cierre
+# M&J Core v0.5.0 — Responsive 4x2
 
-## Cambio principal
+Versión adaptada para un monitor de **4 bloques de ancho por 2 de alto**.
 
-Todas las aplicaciones muestran ahora un botón rojo `X` en la esquina superior derecha.
+## Cambios
+- Escritorio en cuadrícula 2x2.
+- Dos páginas para las 8 aplicaciones.
+- Botones grandes y táctiles.
+- Escala 0.5 para aprovechar la pantalla.
+- Inventario y tareas adaptados a la altura disponible.
+- Mantiene el detector de Mia y sus coordenadas configuradas.
 
-Al tocarlo:
-
-- se cierra la aplicación actual;
-- se vuelve al escritorio;
-- ya no es necesario tocar la barra superior.
-
-El botón forma parte del núcleo de interfaz, por lo que las aplicaciones nuevas pueden añadirlo usando:
-
-```lua
-table.insert(self.buttons, ui.closeButton(monitor, theme))
-```
-
-Esta versión mantiene:
-
-- tareas separadas de J0gar y Mia;
-- inventario con texto grande;
-- detector de Mia por coordenadas;
-- mensajes diarios rotatorios.
+## Instalación
+Copia todo el contenido en la raíz del Advanced Computer y reinicia.

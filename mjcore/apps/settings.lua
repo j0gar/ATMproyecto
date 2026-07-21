@@ -1,7 +1,8 @@
 return function(context)
     local app = {
         id = "settings",
-        title = "AJUSTES"
+        title = "AJUSTES",
+        buttons = {}
     }
 
     function app:draw(ctx)
@@ -10,6 +11,7 @@ return function(context)
         local t = ctx.theme
         local c = ctx.config
         local w, h = m.getSize()
+        self.buttons = {}
 
         m.setBackgroundColor(t.background)
         m.clear()

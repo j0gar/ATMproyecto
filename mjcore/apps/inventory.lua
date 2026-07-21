@@ -61,7 +61,7 @@ return function(context)
 
     function app:start(ctx)
         -- El inventario usa una escala mayor para que sea legible.
-        ctx.monitor.setTextScale(1)
+        ctx.monitor.setTextScale(ctx.config.textScale)
         refresh(self, ctx)
     end
 

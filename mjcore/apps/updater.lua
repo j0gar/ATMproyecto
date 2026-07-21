@@ -11,7 +11,8 @@ return function(context)
         progress = 0,
         total = 1,
         currentFile = "",
-        error = nil
+        error = nil,
+        buttons = {}
     }
 
     local function checkForUpdates(self)
@@ -86,6 +87,7 @@ return function(context)
         local ui = ctx.ui
         local t = ctx.theme
         local w, h = m.getSize()
+        self.buttons = {}
 
         m.setBackgroundColor(t.background)
         m.clear()

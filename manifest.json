@@ -1,5 +1,5 @@
 {
-  "version": "0.4.3",
+  "version": "0.5.0",
   "files": [
     "startup.lua",
     "mj.lua",
@@ -32,5 +32,6 @@
     "mjcore/core/mia_detector.lua",
     "mjcore/data/mia_detector.lua",
     "mjcore/data/m-Mia.lua"
-  ]
+  ],
+  "codename": "Responsive 4x2"
 }

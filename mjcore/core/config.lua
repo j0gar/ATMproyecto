@@ -1,6 +1,6 @@
 return {
-    version = "0.4.3",
-    codename = "Close Buttons",
+    version = "0.5.0",
+    codename = "Responsive 4x2",
 
     github = {
         owner = "j0gar",

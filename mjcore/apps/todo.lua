@@ -42,7 +42,7 @@ return function(context)
 
     function app:start(ctx)
         -- Letras mayores que en el escritorio.
-        ctx.monitor.setTextScale(1)
+        ctx.monitor.setTextScale(ctx.config.textScale)
     end
 
     function app:close(ctx)
@@ -67,11 +67,11 @@ return function(context)
             ui.center(monitor, 4, "SELECCIONA UNA LISTA", theme.accent, theme.background)
 
             local buttonW = w - 6
-            local buttonH = 4
-            local firstY = 7
+            local buttonH = math.max(3, math.floor((h - 8) / 2))
+            local firstY = 4
 
             for index, profile in ipairs(profiles) do
-                local y = firstY + (index - 1) * 6
+                local y = firstY + (index - 1) * (buttonH + 1)
                 ui.fill(monitor, 4, y, buttonW, buttonH, theme.button)
                 ui.border(monitor, 4, y, buttonW, buttonH, theme.accent, theme.button)
                 ui.centerInBox(monitor, 4, y, buttonW, buttonH, profile.label, theme.buttonText, theme.button)
@@ -95,6 +95,9 @@ return function(context)
         ui.write(monitor, w - #owner - 1, 1, owner, theme.accent, theme.topbar)
 
         local tasks = self.data.tasks
+        local cardH = 4
+        local navY = h - 4
+        self.pageSize = math.max(1, math.floor((navY - 4) / (cardH + 1)))
         local pages = math.max(1, math.ceil(#tasks / self.pageSize))
         if self.page > pages then self.page = pages end
 
@@ -109,7 +112,6 @@ return function(context)
                 local task = tasks[index]
                 local marker = task.done and "[X]" or "[ ]"
                 local fg = task.done and theme.success or theme.text
-                local cardH = 4
 
                 ui.fill(monitor, 2, y, w - 3, cardH, theme.panel)
                 ui.border(monitor, 2, y, w - 3, cardH, theme.panelAlt, theme.panel)
@@ -136,8 +138,7 @@ return function(context)
             end
         end
 
-        local navY = h - 4
-        local navW = 10
+        local navW = math.max(6, math.min(10, math.floor(w / 4)))
 
         ui.smallButton(monitor, 2, navY, navW, "<", false, theme)
         table.insert(self.buttons, { id = "previous", x = 2, y = navY, w = navW, h = 3 })
