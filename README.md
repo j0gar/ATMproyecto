@@ -22,6 +22,6 @@ Instalación:
     wget run https://raw.githubusercontent.com/j0gar/ATMproyecto/main/install.lua
 
 
-## Correccion 0.6.3
+## Correccion 0.6.4
 - Envio privado a MiaWRaW usando exactamente `sendMessageToPlayer(mensaje, jugador)`.
 - Eliminado el tercer argumento que provocaba el error de nombre o UUID.

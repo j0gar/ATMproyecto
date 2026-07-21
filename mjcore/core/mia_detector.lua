@@ -2,6 +2,8 @@ if _G.MJ_MIA_DETECTOR then
     return _G.MJ_MIA_DETECTOR
 end
 
+local DEFAULT_PLAYER_NAME = "MiaWRaW"
+
 local detector = {
     configPath = "/mjcore/data/mia_detector.lua",
     messagesPath = "/mjcore/data/m-Mia.lua",
@@ -80,6 +82,16 @@ end
 
 function detector.reload()
     detector.config = loadLua(detector.configPath, {})
+
+    -- Migra configuraciones antiguas que el instalador conserva entre versiones.
+    -- Algunas versiones anteriores guardaban "Mia", un UUID o espacios invisibles.
+    local configuredName = tostring(detector.config.playerName or "")
+    configuredName = configuredName:gsub("^%s+", ""):gsub("%s+$", "")
+    if configuredName == "" or configuredName == "Mia" or configuredName:find("%-", 1, true) then
+        configuredName = DEFAULT_PLAYER_NAME
+    end
+    detector.config.playerName = configuredName
+
     detector.messages = loadLua(detector.messagesPath, {})
     detector.peripheral, detector.peripheralName = findPlayerDetector()
     detector.chatBox = findChatBox()
@@ -115,14 +127,15 @@ function detector.sendDailyMessage()
     -- antigua sendMessage también existe, pero su segundo argumento debe ser
     -- un texto/prefijo y no una tabla.
     if type(detector.chatBox.sendMessageToPlayer) == "function" then
-        -- En esta version de Advanced Peripherals la llamada compatible es
-        -- sendMessageToPlayer(mensaje, jugador). Un tercer argumento provoca
-        -- que la Chat Box interprete mal la peticion.
-        ok, result, err = pcall(
-            detector.chatBox.sendMessageToPlayer,
-            message,
-            detector.config.playerName
-        )
+        -- Llamada exacta comprobada en este servidor:
+        -- chatBox.sendMessageToPlayer(mensaje, "MiaWRaW")
+        local recipient = tostring(detector.config.playerName or DEFAULT_PLAYER_NAME)
+        recipient = recipient:gsub("^%s+", ""):gsub("%s+$", "")
+        if recipient == "" then recipient = DEFAULT_PLAYER_NAME end
+
+        ok, result, err = pcall(function()
+            return detector.chatBox.sendMessageToPlayer(message, recipient)
+        end)
     elseif type(detector.chatBox.sendMessage) == "function" then
         ok, result, err = pcall(
             detector.chatBox.sendMessage,
@@ -221,7 +234,7 @@ function detector.status()
 
     return {
         enabled = detector.config.enabled == true,
-        playerName = detector.config.playerName or "Mia",
+        playerName = detector.config.playerName or DEFAULT_PLAYER_NAME,
         inside = detector.inside,
         peripheralName = detector.peripheralName,
         hasChatBox = detector.chatBox ~= nil,
