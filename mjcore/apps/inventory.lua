@@ -82,7 +82,6 @@ return function(context)
         ui.fill(monitor, 1, 1, w, 2, theme.topbar)
         ui.write(monitor, 2, 1, self.title, theme.text, theme.topbar)
         ui.footer(monitor, theme, "")
-        table.insert(self.buttons, ui.closeButton(monitor, theme))
 
         if self.data then
             local typeText = tostring(self.data.totalTypes) .. " TIPOS"
@@ -186,6 +185,7 @@ return function(context)
             local total = "TOTAL " .. ui.formatNumber(self.data.totalItems)
             ui.write(monitor, 2, h, total, theme.text, theme.topbar)
         end
+        table.insert(self.buttons, ui.closeButton(monitor, theme))
     end
 
     function app:touch(x, y, ctx)

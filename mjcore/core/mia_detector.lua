@@ -63,7 +63,7 @@ local function findChatBox()
 
     for _, name in ipairs(peripheral.getNames()) do
         local wrapped = peripheral.wrap(name)
-        if wrapped and type(wrapped.sendMessageToPlayer) == "function" then
+        if wrapped and (type(wrapped.sendMessage) == "function" or type(wrapped.sendMessageToPlayer) == "function") then
             return wrapped
         end
     end
@@ -106,20 +106,45 @@ function detector.sendDailyMessage()
         return false, detector.lastError
     end
 
-    local ok, result, err = pcall(
-        detector.chatBox.sendMessageToPlayer,
-        message,
-        detector.config.playerName,
-        detector.config.chatPrefix or "M&J Core"
-    )
+    local sendFunction
+    local args
+
+    -- Advanced Peripherals 0.8+ fusionó sendMessageToPlayer dentro de
+    -- sendMessage mediante la opción player. Conservamos compatibilidad
+    -- con versiones anteriores del mod.
+    if type(detector.chatBox.sendMessage) == "function" then
+        sendFunction = detector.chatBox.sendMessage
+        args = {
+            message,
+            {
+                player = detector.config.playerName,
+                prefix = detector.config.chatPrefix or "M&J Core"
+            }
+        }
+    elseif type(detector.chatBox.sendMessageToPlayer) == "function" then
+        sendFunction = detector.chatBox.sendMessageToPlayer
+        args = {
+            message,
+            detector.config.playerName,
+            detector.config.chatPrefix or "M&J Core"
+        }
+    else
+        detector.lastError = "La Chat Box no tiene un metodo compatible para enviar mensajes"
+        return false, detector.lastError
+    end
+
+    local call = table.pack(pcall(sendFunction, table.unpack(args)))
+    local ok = call[1]
+    local result = call[2]
+    local err = call[3]
 
     if not ok then
         detector.lastError = tostring(result)
         return false, detector.lastError
     end
 
-    if result == nil then
-        detector.lastError = tostring(err or "El Chat Box rechazó el mensaje")
+    if result ~= true then
+        detector.lastError = tostring(err or result or "El Chat Box rechazo el mensaje")
         return false, detector.lastError
     end
 

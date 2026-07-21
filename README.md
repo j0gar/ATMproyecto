@@ -1,3 +1,9 @@
+# M&J Core 0.6.1 — Aurora Fix
+
+- Corrige el envío privado a jugadores en Advanced Peripherals 0.8+ y mantiene compatibilidad con 0.7.
+- El botón CERRAR se dibuja siempre al final, abajo a la derecha y en rojo en todas las aplicaciones.
+- Mejora los mensajes de error de la Chat Box.
+
 # M&J Core 0.6.0 - Aurora UI
 
 Actualización visual y funcional para monitores 4x2:

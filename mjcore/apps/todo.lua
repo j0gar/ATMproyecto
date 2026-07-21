@@ -62,7 +62,6 @@ return function(context)
         ui.fill(monitor, 1, 1, w, 2, theme.topbar)
         ui.write(monitor, 2, 1, self.title, theme.text, theme.topbar)
         ui.footer(monitor, theme, "")
-        table.insert(self.buttons, ui.closeButton(monitor, theme))
 
         if self.view == "profiles" then
             ui.center(monitor, 4, "SELECCIONA UNA LISTA", theme.accent, theme.background)
@@ -151,6 +150,7 @@ return function(context)
 
         ui.fill(monitor, 1, h, w, 1, theme.topbar)
         ui.write(monitor, 2, h, "Toca una tarea para marcarla", theme.text, theme.topbar)
+        table.insert(self.buttons, ui.closeButton(monitor, theme))
     end
 
     function app:touch(x, y, ctx)

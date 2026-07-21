@@ -1,5 +1,5 @@
 {
-  "version": "0.6.0",
+  "version": "0.6.1",
   "files": [
     "startup.lua",
     "mj.lua",
@@ -48,5 +48,5 @@
     "mjcore/assets/icons/copper.lua",
     "mjcore/assets/icons/coal.lua"
   ],
-  "codename": "Aurora UI"
+  "codename": "Aurora Fix"
 }
