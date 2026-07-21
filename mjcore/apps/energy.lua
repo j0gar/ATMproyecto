@@ -15,6 +15,7 @@ return function(context)
 
         ui.fill(monitor, 1, 1, w, 2, theme.topbar)
         ui.write(monitor, 2, 1, self.title, theme.text, theme.topbar)
+        ui.footer(monitor, theme, "")
         table.insert(self.buttons, ui.closeButton(monitor, theme))
         ui.write(monitor, 2, 2, "M&J Core", theme.muted, theme.topbar)
 

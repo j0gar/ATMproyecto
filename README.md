@@ -1,15 +1,16 @@
-# M&J Core v0.5.2 — Texto español en monitor
+# M&J Core 0.6.0 - Aurora UI
 
-- La app Detector de Mia muestra correctamente `ñ`, `Ñ`, vocales con tilde, `ü`, `¿` y `¡`.
-- La `ñ` se representa en el monitor como una `n` con virgulilla en la fila superior, evitando los caracteres UTF-8 corruptos de CC:Tweaked.
-- Corregido el usuario predeterminado a `MiaWRaW`.
-- Corregido el grosor de la zona del detector: `corner2.z = 74`.
-- Se conservan los archivos personales durante la actualización.
+Actualización visual y funcional para monitores 4x2:
 
-## Instalación
+- Interfaz más limpia y compacta.
+- Ocho aplicaciones visibles por página cuando el ancho lo permite.
+- Botón CERRAR fijo en la barra inferior de todas las ventanas.
+- Botones compactos de una línea.
+- Paleta oscura personalizada con mejor contraste.
+- Iconos pixelados 3x3 para aplicaciones y materiales.
+- Motor común de iconos en `mjcore/core/icons.lua`.
+- Conserva tareas, mensajes y configuración personal durante la actualización.
 
-```
-wget run https://raw.githubusercontent.com/j0gar/ATMproyecto/main/install.lua
-```
+Instalación:
 
-> El actualizador preserva `mjcore/data/m-Mia.lua`, `mia_detector.lua` y las listas de tareas.
+    wget run https://raw.githubusercontent.com/j0gar/ATMproyecto/main/install.lua

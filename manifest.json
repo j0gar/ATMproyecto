@@ -1,5 +1,5 @@
 {
-  "version": "0.5.2",
+  "version": "0.6.0",
   "files": [
     "startup.lua",
     "mj.lua",
@@ -31,7 +31,22 @@
     "mjcore/data/t-Mia.lua",
     "mjcore/core/mia_detector.lua",
     "mjcore/data/mia_detector.lua",
-    "mjcore/data/m-Mia.lua"
+    "mjcore/data/m-Mia.lua",
+    "mjcore/core/icons.lua",
+    "mjcore/assets/icons/inventory.lua",
+    "mjcore/assets/icons/players.lua",
+    "mjcore/assets/icons/todo.lua",
+    "mjcore/assets/icons/energy.lua",
+    "mjcore/assets/icons/alarms.lua",
+    "mjcore/assets/icons/settings.lua",
+    "mjcore/assets/icons/updater.lua",
+    "mjcore/assets/icons/system.lua",
+    "mjcore/assets/icons/iron.lua",
+    "mjcore/assets/icons/gold.lua",
+    "mjcore/assets/icons/diamond.lua",
+    "mjcore/assets/icons/redstone.lua",
+    "mjcore/assets/icons/copper.lua",
+    "mjcore/assets/icons/coal.lua"
   ],
-  "codename": "Texto espanol en monitor"
+  "codename": "Aurora UI"
 }

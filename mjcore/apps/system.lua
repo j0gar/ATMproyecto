@@ -18,6 +18,7 @@ return function(context)
 
         ui.fill(m, 1, 1, w, 2, t.topbar)
         ui.write(m, 2, 1, self.title, t.text, t.topbar)
+        ui.footer(m, t, "")
         table.insert(self.buttons, ui.closeButton(m, t))
         ui.write(m, w - 13, 1, "v" .. ctx.config.version, t.accent, t.topbar)
 

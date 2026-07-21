@@ -1,6 +1,6 @@
 return {
-    version = "0.5.1",
-    codename = "Responsive 4x2",
+    version = "0.6.0",
+    codename = "Aurora UI",
 
     github = {
         owner = "j0gar",

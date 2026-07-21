@@ -279,21 +279,44 @@ function ui.formatNumber(value)
 end
 
 
-function ui.closeButton(target, theme)
-    local width = 5
-    local x = select(1, target.getSize()) - width
-    local y = 1
+function ui.closeButton(target, theme, label)
+    local w, h = target.getSize()
+    label = label or "CERRAR"
+    local width = math.max(7, #label + 2)
+    local x = w - width + 1
+    local y = h
 
-    ui.fill(target, x, y, width, 2, theme.danger)
-    ui.centerInBox(target, x, y, width, 2, "X", colors.white, theme.danger)
+    ui.fill(target, x, y, width, 1, theme.danger)
+    ui.centerInBox(target, x, y, width, 1, label, colors.white, theme.danger)
 
-    return {
-        id = "close",
-        x = x,
-        y = y,
-        w = width,
-        h = 2
-    }
+    return { id = "close", x = x, y = y, w = width, h = 1 }
+end
+
+function ui.footer(target, theme, leftText)
+    local w, h = target.getSize()
+    ui.fill(target, 1, h, w, 1, theme.footer or theme.topbar)
+    if leftText and leftText ~= "" then
+        ui.write(target, 2, h, ui.clip(leftText, math.max(0, w - 12)), theme.text, theme.footer or theme.topbar)
+    end
+end
+
+function ui.compactButton(target, x, y, width, label, active, theme, colour)
+    local bg = colour or (active and theme.accent or theme.button)
+    local fg = active and theme.selectedText or theme.buttonText
+    ui.fill(target, x, y, width, 1, bg)
+    ui.centerInBox(target, x, y, width, 1, label, fg, bg)
+    return { x=x, y=y, w=width, h=1 }
+end
+
+function ui.drawPixelIcon(target, x, y, icon, colour, background)
+    if not icon then return end
+    background = background or colors.black
+    for row, line in ipairs(icon) do
+        for col = 1, #line do
+            local on = line:sub(col, col) ~= " " and line:sub(col, col) ~= "0"
+            ui.fill(target, x + col - 1, y + row - 1, 1, 1, on and colour or background)
+        end
+    end
 end
 
 return ui
