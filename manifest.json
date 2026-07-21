@@ -1,5 +1,5 @@
 {
-  "version": "0.5.1",
+  "version": "0.5.2",
   "files": [
     "startup.lua",
     "mj.lua",
@@ -33,5 +33,5 @@
     "mjcore/data/mia_detector.lua",
     "mjcore/data/m-Mia.lua"
   ],
-  "codename": "Responsive 4x2 - Mensajes Mia"
+  "codename": "Texto espanol en monitor"
 }

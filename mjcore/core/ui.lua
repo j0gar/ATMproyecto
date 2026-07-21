@@ -33,6 +33,98 @@ function ui.write(target, x, y, text, fg, bg)
     target.write(tostring(text))
 end
 
+-- Convierte texto UTF-8 a caracteres que el terminal de CC:Tweaked puede
+-- dibujar. Los signos diacríticos se pintan en la fila superior, de modo
+-- que una ñ se representa como una n con una virgulilla encima.
+local spanishGlyphs = {
+    ["á"] = { base = "a", mark = "'" },
+    ["é"] = { base = "e", mark = "'" },
+    ["í"] = { base = "i", mark = "'" },
+    ["ó"] = { base = "o", mark = "'" },
+    ["ú"] = { base = "u", mark = "'" },
+    ["Á"] = { base = "A", mark = "'" },
+    ["É"] = { base = "E", mark = "'" },
+    ["Í"] = { base = "I", mark = "'" },
+    ["Ó"] = { base = "O", mark = "'" },
+    ["Ú"] = { base = "U", mark = "'" },
+    ["ñ"] = { base = "n", mark = "~" },
+    ["Ñ"] = { base = "N", mark = "~" },
+    ["ü"] = { base = "u", mark = ":" },
+    ["Ü"] = { base = "U", mark = ":" },
+    ["¿"] = { base = "?" },
+    ["¡"] = { base = "!" }
+}
+
+local function utf8Chars(text)
+    text = tostring(text or "")
+    local chars = {}
+    local i = 1
+
+    while i <= #text do
+        local first = text:byte(i)
+        local length = 1
+        if first and first >= 240 then
+            length = 4
+        elseif first and first >= 224 then
+            length = 3
+        elseif first and first >= 192 then
+            length = 2
+        end
+
+        chars[#chars + 1] = text:sub(i, i + length - 1)
+        i = i + length
+    end
+
+    return chars
+end
+
+function ui.richLength(text)
+    return #utf8Chars(text)
+end
+
+function ui.richClip(text, width)
+    local chars = utf8Chars(text)
+    width = math.floor(tonumber(width) or 0)
+    if width <= 0 then return "" end
+    if #chars <= width then return table.concat(chars) end
+    if width <= 2 then
+        local out = {}
+        for i = 1, width do out[#out + 1] = chars[i] end
+        return table.concat(out)
+    end
+
+    local out = {}
+    for i = 1, width - 2 do out[#out + 1] = chars[i] end
+    return table.concat(out) .. ".."
+end
+
+function ui.writeRich(target, x, y, text, fg, bg)
+    local chars = utf8Chars(text)
+    local cursorX = x
+
+    if bg then target.setBackgroundColor(bg) end
+    if fg then target.setTextColor(fg) end
+
+    for _, char in ipairs(chars) do
+        local glyph = spanishGlyphs[char]
+        local base = glyph and glyph.base or char
+
+        -- Los caracteres UTF-8 no contemplados se sustituyen para evitar
+        -- que aparezcan dos símbolos corruptos en pantalla.
+        if #base > 1 then base = "?" end
+
+        target.setCursorPos(cursorX, y)
+        target.write(base)
+
+        if glyph and glyph.mark and y > 1 then
+            target.setCursorPos(cursorX, y - 1)
+            target.write(glyph.mark)
+        end
+
+        cursorX = cursorX + 1
+    end
+end
+
 function ui.center(target, y, text, fg, bg)
     local width = target.getSize()
     local x = math.max(1, math.floor((width - #tostring(text)) / 2) + 1)

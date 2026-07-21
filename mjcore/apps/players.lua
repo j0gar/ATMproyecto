@@ -60,7 +60,7 @@ return function(context)
         ui.border(monitor, 3, 8, w - 5, 7, theme.panelAlt, theme.panel)
 
         ui.write(monitor, 5, 9, "MENSAJE DEL DIA", theme.accent, theme.panel)
-        ui.write(monitor, 5, 11, ui.clip(status.message or "", w - 10), theme.text, theme.panel)
+        ui.writeRich(monitor, 5, 11, ui.richClip(status.message or "", w - 10), theme.text, theme.panel)
 
         local p1 = status.corner1
         local p2 = status.corner2
