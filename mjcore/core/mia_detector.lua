@@ -106,37 +106,34 @@ function detector.sendDailyMessage()
         return false, detector.lastError
     end
 
-    local sendFunction
-    local args
+    local ok, result, err
 
-    -- Advanced Peripherals 0.8+ fusionó sendMessageToPlayer dentro de
-    -- sendMessage mediante la opción player. Conservamos compatibilidad
-    -- con versiones anteriores del mod.
-    if type(detector.chatBox.sendMessage) == "function" then
-        sendFunction = detector.chatBox.sendMessage
-        args = {
+    -- Hay dos APIs distintas de Advanced Peripherals:
+    -- 0.7: sendMessageToPlayer(mensaje, jugador, prefijo, ...)
+    -- 0.8: sendMessage(mensaje, { player=..., prefix=... })
+    -- Si existen ambas, debemos priorizar sendMessageToPlayer: en la API
+    -- antigua sendMessage también existe, pero su segundo argumento debe ser
+    -- un texto/prefijo y no una tabla.
+    if type(detector.chatBox.sendMessageToPlayer) == "function" then
+        ok, result, err = pcall(
+            detector.chatBox.sendMessageToPlayer,
+            message,
+            detector.config.playerName,
+            detector.config.chatPrefix or "M&J Core"
+        )
+    elseif type(detector.chatBox.sendMessage) == "function" then
+        ok, result, err = pcall(
+            detector.chatBox.sendMessage,
             message,
             {
                 player = detector.config.playerName,
                 prefix = detector.config.chatPrefix or "M&J Core"
             }
-        }
-    elseif type(detector.chatBox.sendMessageToPlayer) == "function" then
-        sendFunction = detector.chatBox.sendMessageToPlayer
-        args = {
-            message,
-            detector.config.playerName,
-            detector.config.chatPrefix or "M&J Core"
-        }
+        )
     else
         detector.lastError = "La Chat Box no tiene un metodo compatible para enviar mensajes"
         return false, detector.lastError
     end
-
-    local call = table.pack(pcall(sendFunction, table.unpack(args)))
-    local ok = call[1]
-    local result = call[2]
-    local err = call[3]
 
     if not ok then
         detector.lastError = tostring(result)
