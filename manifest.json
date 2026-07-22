@@ -1,5 +1,5 @@
 {
-  "version": "0.7.0",
+  "version": "0.7.1",
   "files": [
     "startup.lua",
     "mj.lua",
@@ -53,5 +53,5 @@
     "mjcore/server.lua",
     "mjcore/data/node.lua"
   ],
-  "codename": "Logistics Network"
+  "codename": "Inventory Manager Fix"
 }

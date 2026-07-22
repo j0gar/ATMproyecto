@@ -1,3 +1,10 @@
+# M&J Core 0.7.1 — Inventory Manager Fix
+
+- Corrige la detección de Inventory Managers en Advanced Peripherals 0.7.62b.
+- Usa `peripheral.hasType` y una comprobación de métodos como respaldo.
+- Normaliza el nombre del propietario para que no afecten mayúsculas/minúsculas.
+- Añade un mensaje de diagnóstico con los propietarios detectados cuando no encuentra el solicitado.
+
 # M&J Core 0.6.1 — Aurora Fix
 
 - Corrige el envío privado a jugadores en Advanced Peripherals 0.8+ y mantiene compatibilidad con 0.7.
