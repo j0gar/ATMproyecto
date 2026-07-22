@@ -1,5 +1,5 @@
 {
-  "version": "0.8.2",
+  "version": "0.8.4",
   "files": [
     "startup.lua",
     "mj.lua",
@@ -7,6 +7,7 @@
     "manifest.json",
     "mjcore/boot.lua",
     "mjcore/desktop.lua",
+    "mjcore/pocket.lua",
     "mjcore/core/config.lua",
     "mjcore/core/theme.lua",
     "mjcore/core/ui.lua",
@@ -53,5 +54,5 @@
     "mjcore/server.lua",
     "mjcore/data/node.lua"
   ],
-  "codename": "Stable Network Fix"
+  "codename": "Pocket Admin"
 }

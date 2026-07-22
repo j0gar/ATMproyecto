@@ -11,6 +11,13 @@ local BAR_STEPS = 27
 
 local monitor, monitorName = ui.findMonitor(config.monitorName)
 
+-- Las Pocket Computers no necesitan monitor externo.
+if node.role == "pocket" or (type(pocket) == "table" and not monitor) then
+    logger.log("Iniciando M&J Pocket")
+    shell.run("/mjcore/pocket.lua")
+    return
+end
+
 term.setBackgroundColor(colors.black)
 term.setTextColor(colors.white)
 term.clear()

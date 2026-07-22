@@ -23,7 +23,30 @@ while true do
         elseif msg.kind=="tasks_get" then result,err=loadTasks((msg.payload or {}).profile); ok=result~=nil
         elseif msg.kind=="tasks_toggle" then
             local p=msg.payload or {}; local data,path=loadTasks(p.profile)
-            if data and data.tasks[tonumber(p.index) or 0] then data.tasks[tonumber(p.index)].done=not data.tasks[tonumber(p.index)].done; ok=saveTable(path,data); result=data; if not ok then err="No se pudieron guardar tareas" end else ok=false; err="Tarea inexistente" end
+            local index=tonumber(p.index) or 0
+            if data and data.tasks[index] then
+                data.tasks[index].done=not data.tasks[index].done
+                ok=saveTable(path,data); result=data
+                if not ok then err="No se pudieron guardar tareas" end
+            else ok=false; err="Tarea inexistente" end
+        elseif msg.kind=="tasks_add" then
+            local p=msg.payload or {}; local data,path=loadTasks(p.profile)
+            local text=tostring(p.text or ""):gsub("^%s+",""):gsub("%s+$","")
+            if not data then ok=false
+            elseif text=="" then ok=false; err="El texto de la tarea esta vacio"
+            else
+                table.insert(data.tasks,{text=text,done=false})
+                ok=saveTable(path,data); result=data
+                if not ok then err="No se pudieron guardar tareas" end
+            end
+        elseif msg.kind=="tasks_remove" then
+            local p=msg.payload or {}; local data,path=loadTasks(p.profile)
+            local index=tonumber(p.index) or 0
+            if data and data.tasks[index] then
+                table.remove(data.tasks,index)
+                ok=saveTable(path,data); result=data
+                if not ok then err="No se pudieron guardar tareas" end
+            else ok=false; err="Tarea inexistente" end
         else ok=false; err="Peticion desconocida: "..tostring(msg.kind) end
         network.reply(msg,ok,result or err)
     end

@@ -84,7 +84,8 @@ return function(context)
             end
 
             ui.fill(monitor, 1, h, w, 1, theme.panel)
-            ui.write(monitor, 2, h, "Toca arriba para volver al escritorio", theme.text, theme.panel)
+            ui.write(monitor, 2, h, "Selecciona una lista", theme.text, theme.panel)
+            table.insert(self.buttons, ui.closeButton(monitor, theme))
             return
         end
 

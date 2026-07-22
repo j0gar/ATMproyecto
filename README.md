@@ -46,3 +46,35 @@ Configuración rápida:
 - Secundario: `mj setup terminal left j0gar 2`
 
 El último argumento del servidor (`right`) es el lado, visto desde el Inventory Manager, donde está el inventario fuente. El Storage Controller debe estar accesible físicamente desde ese lado para `addItemToPlayer`.
+
+
+## Gestion de tareas desde el juego
+
+```
+mj task list j0gar
+mj task add j0gar Conseguir 64 bloques de hierro
+mj task done j0gar 1
+mj task remove j0gar 1
+```
+
+Los mismos comandos funcionan con el perfil `mia`. En un terminal secundario, los cambios se envian al servidor por la red de M&J Core.
+
+
+## M&J Pocket
+
+La v0.8.4 incluye un cliente para Advanced Wireless Pocket Computer.
+
+Configuralo una vez con:
+
+```
+mj setup pocket left j0gar 2
+reboot
+```
+
+Sustituye `2` por el ID real del servidor. El lado del modem es orientativo: M&J Core busca automaticamente cualquier modem wireless disponible.
+
+Funciones iniciales:
+- anadir, completar y eliminar tareas con el teclado del juego;
+- buscar objetos y pedirlos al Inventory Manager;
+- comprobar la conexion con el servidor;
+- salir a la consola sin detener los ordenadores de los monitores.

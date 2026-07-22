@@ -1,5 +1,5 @@
 return {
-    role = "server", -- server | terminal
+    role = "server", -- server | terminal | pocket
     modemSide = "left",
     channel = 321,
     serverId = 2,
