@@ -18,15 +18,18 @@ return function(context)
 
     local amounts = {1, 16, 32, 64}
 
+    local function now()
+        if os.epoch then return os.epoch("utc") / 1000 end
+        return os.clock()
+    end
+
     local function inside(button, x, y)
         return x >= button.x and x < button.x + button.w
            and y >= button.y and y < button.y + button.h
     end
 
     local function scan()
-        if node.role == "terminal" then
-            return network.request("inventory_scan", {}, 4)
-        end
+        if node.role == "terminal" then return network.request("inventory_scan", {}, 4) end
         return logistics.scan()
     end
 
@@ -43,7 +46,7 @@ return function(context)
 
     local function setMessage(self, text)
         self.message = tostring(text)
-        self.messageUntil = os.clock() + 3
+        self.messageUntil = now() + 3
     end
 
     local function refresh(self, keepMessage)
@@ -61,10 +64,9 @@ return function(context)
         end
 
         self.data = result
+        self.data.items = self.data.items or {}
         table.sort(self.data.items, function(a, b)
-            if a.count == b.count then
-                return tostring(a.displayName) < tostring(b.displayName)
-            end
+            if a.count == b.count then return tostring(a.displayName) < tostring(b.displayName) end
             return a.count > b.count
         end)
 
@@ -91,26 +93,22 @@ return function(context)
 
         ui.fill(m, 1, 1, w, 2, theme.topbar)
         ui.write(m, 2, 1, "INVENTARIO", theme.text, theme.topbar)
-        ui.write(m, w - #node.player - 1, 1, node.player, theme.accent, theme.topbar)
+        ui.write(m, math.max(1, w - #node.player - 1), 1, node.player, theme.accent, theme.topbar)
 
         if self.error then
             ui.center(m, math.floor(h / 2), ui.clip(self.error, w - 4), theme.danger, theme.background)
-            table.insert(self.buttons, ui.closeButton(m, theme))
+            self.buttons[#self.buttons + 1] = ui.closeButton(m, theme)
             return
         end
 
         if not self.data then return end
 
-        local cols = 4
-        local rows = 2
-        local gapX = 1
-        local gapY = 1
-        local marginX = 1
+        local cols, rows = 4, 2
+        local gapX, gapY, marginX = 1, 1, 1
         local top = 3
-        local footerH = 3
-        local navY = h - 2
-        local gridH = navY - top
-
+        local navY = h - 1
+        local gridBottom = navY - 1
+        local gridH = gridBottom - top + 1
         local cardW = math.floor((w - marginX * 2 - (cols - 1) * gapX) / cols)
         local cardH = math.floor((gridH - gapY) / rows)
 
@@ -135,7 +133,6 @@ return function(context)
 
                 local name = ui.clip(item.displayName, math.max(1, cardW - 2))
                 local count = ui.formatNumber(item.count)
-
                 ui.centerInBox(m, x + 1, y + 1, cardW - 2, 1, name, theme.text, theme.panel)
                 ui.centerInBox(m, x + 1, y + 2, cardW - 2, 1, count, theme.accent, theme.panel)
 
@@ -146,51 +143,33 @@ return function(context)
                 local extra = innerW - baseW * 4
                 local buttonX = innerX
 
-                for i, amount in ipairs(amounts) do
-                    local buttonW = baseW
-                    if i <= extra then buttonW = buttonW + 1 end
-
+                for index, amount in ipairs(amounts) do
+                    local buttonW = baseW + (index <= extra and 1 or 0)
                     ui.fill(m, buttonX, buttonY, buttonW, 1, theme.button)
-                    ui.centerInBox(
-                        m,
-                        buttonX,
-                        buttonY,
-                        buttonW,
-                        1,
-                        tostring(amount),
-                        theme.buttonText,
-                        theme.button
-                    )
-
-                    table.insert(self.buttons, {
-                        id = "take",
-                        item = item,
-                        count = amount,
-                        x = buttonX,
-                        y = buttonY,
-                        w = buttonW,
-                        h = 1
-                    })
-
+                    ui.centerInBox(m, buttonX, buttonY, buttonW, 1, tostring(amount), theme.buttonText, theme.button)
+                    self.buttons[#self.buttons + 1] = {
+                        id = "take", item = item, count = amount,
+                        x = buttonX, y = buttonY, w = buttonW, h = 1
+                    }
                     buttonX = buttonX + buttonW
                 end
             end
         end
 
-        ui.fill(m, 1, navY, w, 2, theme.footer)
+        ui.fill(m, 1, navY, w, 1, theme.footer)
         ui.write(m, 2, navY, "<", theme.text, theme.footer)
         ui.center(m, navY, tostring(self.page) .. "/" .. tostring(pages), theme.accent, theme.footer)
-        ui.write(m, w - 1, navY, ">", theme.text, theme.footer)
 
-        table.insert(self.buttons, {id = "prev", x = 1, y = navY, w = 5, h = 2})
-        table.insert(self.buttons, {id = "next", x = w - 4, y = navY, w = 5, h = 2})
-        table.insert(self.buttons, ui.closeButton(m, theme))
+        local closeButton = ui.closeButton(m, theme)
+        local nextX = math.max(7, closeButton.x - 3)
+        ui.write(m, nextX, navY, ">", theme.text, theme.footer)
+
+        self.buttons[#self.buttons + 1] = {id = "prev", x = 1, y = navY, w = 5, h = 1}
+        self.buttons[#self.buttons + 1] = {id = "next", x = nextX - 1, y = navY, w = 3, h = 1}
+        self.buttons[#self.buttons + 1] = closeButton
 
         if self.message then
-            ui.notification(m, {
-                message = self.message,
-                level = "success"
-            }, theme)
+            ui.notification(m, {message = self.message, level = "success"}, theme)
         end
     end
 
@@ -199,14 +178,11 @@ return function(context)
             if inside(button, x, y) then
                 if button.id == "close" then
                     return "close"
-
                 elseif button.id == "prev" then
                     self.page = math.max(1, self.page - 1)
-
                 elseif button.id == "next" then
                     local pages = math.max(1, math.ceil(#self.data.items / self.pageSize))
                     self.page = math.min(pages, self.page + 1)
-
                 elseif button.id == "take" then
                     local result, err = deliver(button.item, button.count)
                     if result then
@@ -216,14 +192,13 @@ return function(context)
                         self.error = tostring(err)
                     end
                 end
-
                 return
             end
         end
     end
 
     function app:update(ctx)
-        if self.message and self.messageUntil and os.clock() >= self.messageUntil then
+        if self.message and self.messageUntil and now() >= self.messageUntil then
             self.message = nil
             self.messageUntil = nil
         end

@@ -1,36 +1,21 @@
 local appCore = {}
 
 function appCore.load(path, context)
-    if not fs.exists(path) then
-        return nil, "No existe la aplicacion: " .. path
-    end
+    if not fs.exists(path) then return nil, "No existe la aplicacion: " .. path end
 
     local chunk, err = loadfile(path)
-    if not chunk then
-        return nil, err
-    end
+    if not chunk then return nil, err end
 
     local ok, appFactory = pcall(chunk)
-    if not ok then
-        return nil, appFactory
-    end
-
-    if type(appFactory) ~= "function" then
-        return nil, "La aplicacion no devuelve una funcion."
-    end
+    if not ok then return nil, appFactory end
+    if type(appFactory) ~= "function" then return nil, "La aplicacion no devuelve una funcion." end
 
     local okApp, app = pcall(appFactory, context)
-    if not okApp then
-        return nil, app
-    end
-
-    if type(app) ~= "table" then
-        return nil, "La aplicacion no devuelve una tabla."
-    end
+    if not okApp then return nil, app end
+    if type(app) ~= "table" then return nil, "La aplicacion no devuelve una tabla." end
 
     app.id = app.id or fs.getName(path)
     app.title = app.title or app.id
-
     return app
 end
 
@@ -73,23 +58,19 @@ function appCore.run(app, context)
                 redraw = true
             end
 
-        elseif event == "timer" then
-            if a == timer then
-                if app.update then
-                    local ok, err = pcall(app.update, app, context)
-                    if not ok then return false, err end
-                end
-                timer = os.startTimer(1)
-                redraw = true
+        elseif event == "timer" and a == timer then
+            if app.update then
+                local ok, err = pcall(app.update, app, context)
+                if not ok then return false, err end
             end
-            if context.notifications.update() then redraw = true end
+
+            context.notifications.update()
+            timer = os.startTimer(1)
+            redraw = true
         end
     end
 
-    if app.close then
-        pcall(app.close, app, context)
-    end
-
+    if app.close then pcall(app.close, app, context) end
     return true
 end
 

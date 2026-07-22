@@ -3,7 +3,8 @@ local theme = dofile("/mjcore/core/theme.lua")
 local ui = dofile("/mjcore/core/ui.lua")
 local logger = dofile("/mjcore/core/logger.lua")
 local logo = dofile("/mjcore/assets/logo.lua")
-local node = dofile("/mjcore/core/node.lua")\nlocal network = dofile("/mjcore/core/network.lua")
+local node = dofile("/mjcore/core/node.lua")
+local network = dofile("/mjcore/core/network.lua")
 
 local BOOT_DURATION = 2.7
 local BAR_STEPS = 27
@@ -22,6 +23,13 @@ if not monitor then
     return
 end
 
+local networkOk, networkInfo = network.open()
+if networkOk then
+    logger.log("Modem wireless abierto: " .. tostring(networkInfo))
+else
+    logger.log("No se pudo abrir la red: " .. tostring(networkInfo), "WARNING")
+end
+
 monitor.setTextScale(config.textScale)
 monitor.setBackgroundColor(theme.background)
 monitor.setTextColor(theme.text)
@@ -33,31 +41,15 @@ local function drawPixelLogo(target)
     local pixelH = logo.pixelHeight or 1
     local logoW = #logo.pixels[1] * pixelW
     local logoH = #logo.pixels * pixelH
-
     local startX = math.max(1, math.floor((screenW - logoW) / 2) + 1)
     local startY = math.max(2, math.floor((screenH - logoH) / 2) - 4)
-
-    local palette = {
-        H = colors.gray,
-        M = colors.lightGray,
-        J = colors.cyan,
-        C = colors.blue
-    }
+    local palette = {H = colors.gray, M = colors.lightGray, J = colors.cyan, C = colors.blue}
 
     for row, line in ipairs(logo.pixels) do
         for column = 1, #line do
-            local symbol = line:sub(column, column)
-            local color = palette[symbol]
-
+            local color = palette[line:sub(column, column)]
             if color then
-                ui.fill(
-                    target,
-                    startX + (column - 1) * pixelW,
-                    startY + (row - 1) * pixelH,
-                    pixelW,
-                    pixelH,
-                    color
-                )
+                ui.fill(target, startX + (column - 1) * pixelW, startY + (row - 1) * pixelH, pixelW, pixelH, color)
             end
         end
     end
@@ -70,14 +62,8 @@ local function drawLoadingBar(target, y, progress)
     local barW = math.max(20, math.floor(screenW * 0.58))
     local x = math.floor((screenW - barW) / 2) + 1
     local filled = math.floor(barW * progress)
-
     ui.fill(target, x, y, barW, 1, theme.panel)
-
-    if filled > 0 then
-        ui.fill(target, x, y, filled, 1, theme.accent)
-    end
-
-    return x, barW
+    if filled > 0 then ui.fill(target, x, y, filled, 1, theme.accent) end
 end
 
 local logoBottom = drawPixelLogo(monitor)
@@ -86,13 +72,7 @@ local titleY = math.min(screenH - 6, logoBottom + 1)
 local barY = math.min(screenH - 3, titleY + 3)
 
 ui.center(monitor, titleY, "M&J CORE", theme.accent, theme.background)
-ui.center(
-    monitor,
-    titleY + 1,
-    "FOUNDATION v" .. config.version,
-    theme.muted,
-    theme.background
-)
+ui.center(monitor, titleY + 1, "STABLE v" .. config.version, theme.muted, theme.background)
 
 for step = 0, BAR_STEPS do
     local progress = step / BAR_STEPS
@@ -102,7 +82,7 @@ for step = 0, BAR_STEPS do
     if progress < 0.30 then
         status = "INICIANDO NUCLEO"
     elseif progress < 0.62 then
-        status = "CARGANDO APLICACIONES"
+        status = "ABRIENDO RED"
     elseif progress < 0.90 then
         status = "PREPARANDO ESCRITORIO"
     else
@@ -112,13 +92,16 @@ for step = 0, BAR_STEPS do
     local statusY = math.min(screenH - 1, barY + 2)
     ui.fill(monitor, 1, statusY, screenW, 1, theme.background)
     ui.center(monitor, statusY, status, theme.text, theme.background)
-
     sleep(BOOT_DURATION / BAR_STEPS)
 end
 
-local networkOk, networkInfo = network.open()\nif networkOk then\n    logger.log("Red wireless abierta en " .. tostring(networkInfo))\nelse\n    logger.log("Red wireless no disponible: " .. tostring(networkInfo), "WARNING")\nend\n\nlogger.log("Arranque visual completado en " .. monitorName)
+logger.log("Arranque completado en " .. monitorName .. " como " .. tostring(node.role))
+
 if node.role == "server" then
-    parallel.waitForAny(function() shell.run("/mjcore/desktop.lua") end, function() shell.run("/mjcore/server.lua") end)
+    parallel.waitForAny(
+        function() shell.run("/mjcore/desktop.lua") end,
+        function() shell.run("/mjcore/server.lua") end
+    )
 else
     shell.run("/mjcore/desktop.lua")
 end

@@ -265,12 +265,10 @@ local function runDesktop(entry, desktopIndex, desktopCount)
         elseif event == "peripheral_detach" and a == monitorName then
             running = false
 
-        elseif event == "timer" then
-            if a == refreshTimer then
-                refreshTimer = os.startTimer(config.refreshSeconds)
-                redraw = true
-            end
-            if notifications.update() then redraw = true end
+        elseif event == "timer" and a == refreshTimer then
+            notifications.update()
+            refreshTimer = os.startTimer(config.refreshSeconds)
+            redraw = true
         end
     end
 end
