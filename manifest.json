@@ -1,5 +1,5 @@
 {
-  "version": "0.8.1",
+  "version": "0.8.2",
   "files": [
     "startup.lua",
     "mj.lua",
@@ -53,5 +53,5 @@
     "mjcore/server.lua",
     "mjcore/data/node.lua"
   ],
-  "codename": "Stable Network"
+  "codename": "Stable Network Fix"
 }

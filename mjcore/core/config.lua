@@ -1,6 +1,6 @@
 return {
-    version = "0.8.1",
-    codename = "Stable Network",
+    version = "0.8.2",
+    codename = "Stable Network Fix",
 
     github = {
         owner = "j0gar",

@@ -29,7 +29,7 @@ elseif command == "setup" then
 elseif command == "version" then
     local config = dofile("/mjcore/core/config.lua")
     print("M&J Core " .. tostring(config.version))
-    print("Stable Network")
+    print("Stable Network Fix")
 
 elseif command == "logs" then
     if fs.exists("/mjcore/logs/system.log") then
