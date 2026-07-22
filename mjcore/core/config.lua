@@ -1,6 +1,6 @@
 return {
-    version = "0.8.0",
-    codename = "Independent Desktops",
+    version = "0.8.1",
+    codename = "Network Stability",
 
     github = {
         owner = "j0gar",

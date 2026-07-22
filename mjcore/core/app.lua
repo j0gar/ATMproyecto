@@ -74,9 +74,7 @@ function appCore.run(app, context)
             end
 
         elseif event == "timer" then
-            if context.notifications.handleTimer(a) then
-                redraw = true
-            elseif a == timer then
+            if a == timer then
                 if app.update then
                     local ok, err = pcall(app.update, app, context)
                     if not ok then return false, err end
@@ -84,6 +82,7 @@ function appCore.run(app, context)
                 timer = os.startTimer(1)
                 redraw = true
             end
+            if context.notifications.update() then redraw = true end
         end
     end
 

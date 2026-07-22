@@ -108,7 +108,7 @@ return function(context)
         local marginX = 1
         local top = 3
         local footerH = 3
-        local navY = h - footerH + 1
+        local navY = h - 2
         local gridH = navY - top
 
         local cardW = math.floor((w - marginX * 2 - (cols - 1) * gapX) / cols)
@@ -177,13 +177,13 @@ return function(context)
             end
         end
 
-        ui.fill(m, 1, navY, w, footerH, theme.footer)
-        ui.write(m, 2, navY + 1, "<", theme.text, theme.footer)
-        ui.center(m, navY + 1, tostring(self.page) .. "/" .. tostring(pages), theme.accent, theme.footer)
-        ui.write(m, w - 1, navY + 1, ">", theme.text, theme.footer)
+        ui.fill(m, 1, navY, w, 2, theme.footer)
+        ui.write(m, 2, navY, "<", theme.text, theme.footer)
+        ui.center(m, navY, tostring(self.page) .. "/" .. tostring(pages), theme.accent, theme.footer)
+        ui.write(m, w - 1, navY, ">", theme.text, theme.footer)
 
-        table.insert(self.buttons, {id = "prev", x = 1, y = navY, w = 5, h = footerH})
-        table.insert(self.buttons, {id = "next", x = w - 4, y = navY, w = 5, h = footerH})
+        table.insert(self.buttons, {id = "prev", x = 1, y = navY, w = 5, h = 2})
+        table.insert(self.buttons, {id = "next", x = w - 4, y = navY, w = 5, h = 2})
         table.insert(self.buttons, ui.closeButton(m, theme))
 
         if self.message then

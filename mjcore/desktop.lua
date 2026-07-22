@@ -266,12 +266,11 @@ local function runDesktop(entry, desktopIndex, desktopCount)
             running = false
 
         elseif event == "timer" then
-            if notifications.handleTimer(a) then
-                redraw = true
-            elseif a == refreshTimer then
+            if a == refreshTimer then
                 refreshTimer = os.startTimer(config.refreshSeconds)
                 redraw = true
             end
+            if notifications.update() then redraw = true end
         end
     end
 end

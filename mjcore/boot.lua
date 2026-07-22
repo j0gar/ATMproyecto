@@ -3,7 +3,7 @@ local theme = dofile("/mjcore/core/theme.lua")
 local ui = dofile("/mjcore/core/ui.lua")
 local logger = dofile("/mjcore/core/logger.lua")
 local logo = dofile("/mjcore/assets/logo.lua")
-local node = dofile("/mjcore/core/node.lua")
+local node = dofile("/mjcore/core/node.lua")\nlocal network = dofile("/mjcore/core/network.lua")
 
 local BOOT_DURATION = 2.7
 local BAR_STEPS = 27
@@ -116,7 +116,7 @@ for step = 0, BAR_STEPS do
     sleep(BOOT_DURATION / BAR_STEPS)
 end
 
-logger.log("Arranque visual completado en " .. monitorName)
+local networkOk, networkInfo = network.open()\nif networkOk then\n    logger.log("Red wireless abierta en " .. tostring(networkInfo))\nelse\n    logger.log("Red wireless no disponible: " .. tostring(networkInfo), "WARNING")\nend\n\nlogger.log("Arranque visual completado en " .. monitorName)
 if node.role == "server" then
     parallel.waitForAny(function() shell.run("/mjcore/desktop.lua") end, function() shell.run("/mjcore/server.lua") end)
 else
