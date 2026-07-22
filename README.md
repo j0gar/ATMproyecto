@@ -25,3 +25,17 @@ Instalación:
 ## Correccion 0.6.4
 - Envio privado a MiaWRaW usando exactamente `sendMessageToPlayer(mensaje, jugador)`.
 - Eliminado el tercer argumento que provocaba el error de nombre o UUID.
+
+## v0.7.0 Logistics Network
+- Escritorios independientes por ordenador/monitor.
+- Nodo principal servidor y terminales secundarios cliente.
+- Perfil de terminal con Inventario y Tareas.
+- Inventario táctil en baldosas tipo drawer, con botones 1, 16, 32 y 64.
+- Peticiones inalámbricas al servidor central.
+- Entrega al jugador mediante su Inventory Manager vinculado.
+
+Configuración rápida:
+- Principal: `mj setup server left j0gar 2 right`
+- Secundario: `mj setup terminal left j0gar 2`
+
+El último argumento del servidor (`right`) es el lado, visto desde el Inventory Manager, donde está el inventario fuente. El Storage Controller debe estar accesible físicamente desde ese lado para `addItemToPlayer`.

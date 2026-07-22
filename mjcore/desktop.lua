@@ -7,6 +7,7 @@ local notificationsFactory = dofile("/mjcore/core/notifications.lua")
 local appCore = dofile("/mjcore/core/app.lua")
 local appsCore = dofile("/mjcore/core/apps.lua")
 local miaDetector = dofile("/mjcore/core/mia_detector.lua")
+local node = dofile("/mjcore/core/node.lua")
 
 local monitor, monitorName = ui.findMonitor(config.monitorName)
 if not monitor then error("No hay monitor conectado", 0) end
@@ -15,12 +16,19 @@ theme.apply(monitor)
 
 local notifications = notificationsFactory.new(config, logger)
 local registry = appsCore.loadRegistry()
+if type(node.apps) == "table" then
+  local allowed={}
+  for _,id in ipairs(node.apps) do allowed[id]=true end
+  local filtered={}
+  for _,entry in ipairs(registry) do if allowed[entry.id] then filtered[#filtered+1]=entry end end
+  registry=filtered
+end
 local buttons, page = {}, 1
 local pageSize = 8
 local redraw, running = true, true
 
 local context = { monitor=monitor, monitorName=monitorName, config=config, theme=theme,
-  ui=ui, logger=logger, notifications=notifications }
+  ui=ui, logger=logger, notifications=notifications, node=node }
 
 local iconColours = {
   inventory=colors.orange, players=colors.lightBlue, todo=colors.lime,
@@ -77,7 +85,7 @@ local function draw()
   ui.write(monitor,2,1,"M&J CORE",theme.text,theme.topbar)
   local clock=textutils.formatTime(os.time(),true)
   ui.write(monitor,w-#clock-1,1,clock,theme.text,theme.topbar)
-  ui.write(monitor,2,2,"AURORA UI",theme.muted,theme.topbar)
+  ui.write(monitor,2,2,node.role=="terminal" and "TERMINAL" or "AURORA UI",theme.muted,theme.topbar)
   ui.write(monitor,w-#("v"..config.version)-1,2,"v"..config.version,theme.accent,theme.topbar)
   ui.write(monitor,2,3,"APLICACIONES",theme.muted,theme.desktop)
 

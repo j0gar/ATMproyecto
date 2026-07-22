@@ -1,4 +1,6 @@
 return function(context)
+    local node = dofile("/mjcore/core/node.lua")
+    local network = dofile("/mjcore/core/network.lua")
     local app = {
         id = "todo",
         title = "TAREAS",
@@ -21,23 +23,18 @@ return function(context)
            and y >= button.y and y < button.y + button.h
     end
 
-    local function loadProfile(self, profile)
-        local ok, result = pcall(dofile, profile.path)
-        if not ok or type(result) ~= "table" then
-            self.data = {
-                owner = string.upper(profile.id),
-                tasks = {
-                    { text = "No se pudo cargar " .. profile.path, done = false }
-                }
-            }
-        else
-            result.tasks = result.tasks or {}
-            self.data = result
-        end
+    local function saveLocal(profile, data)
+        local f=fs.open(profile.path,"w"); if not f then return false end
+        f.write("return "..textutils.serialize(data)); f.close(); return true
+    end
 
-        self.profile = profile
-        self.page = 1
-        self.view = "list"
+    local function loadProfile(self, profile)
+        local result, err
+        if node.role == "terminal" then result,err=network.request("tasks_get",{profile=profile.id},4)
+        else local ok; ok,result=pcall(dofile,profile.path); if not ok then err=result; result=nil end end
+        if type(result) ~= "table" then self.data={owner=string.upper(profile.id),tasks={{text=tostring(err or "No se pudieron cargar las tareas"),done=false}}}
+        else result.tasks=result.tasks or {}; self.data=result end
+        self.profile=profile; self.page=1; self.view="list"
     end
 
     function app:start(ctx)
@@ -162,7 +159,12 @@ return function(context)
 
                 elseif button.id == "toggle" then
                     local task = self.data.tasks[button.taskIndex]
-                    if task then task.done = not task.done end
+                    if task then
+                        if node.role == "terminal" then
+                            local result=network.request("tasks_toggle",{profile=self.profile.id,index=button.taskIndex},4)
+                            if result then self.data=result end
+                        else task.done=not task.done; saveLocal(self.profile,self.data) end
+                    end
 
                 elseif button.id == "previous" then
                     self.page = math.max(1, self.page - 1)

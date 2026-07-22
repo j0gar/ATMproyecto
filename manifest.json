@@ -1,5 +1,5 @@
 {
-  "version": "0.6.4",
+  "version": "0.7.0",
   "files": [
     "startup.lua",
     "mj.lua",
@@ -46,7 +46,12 @@
     "mjcore/assets/icons/diamond.lua",
     "mjcore/assets/icons/redstone.lua",
     "mjcore/assets/icons/copper.lua",
-    "mjcore/assets/icons/coal.lua"
+    "mjcore/assets/icons/coal.lua",
+    "mjcore/core/node.lua",
+    "mjcore/core/network.lua",
+    "mjcore/core/logistics.lua",
+    "mjcore/server.lua",
+    "mjcore/data/node.lua"
   ],
-  "codename": "Aurora Chat Fix"
+  "codename": "Logistics Network"
 }

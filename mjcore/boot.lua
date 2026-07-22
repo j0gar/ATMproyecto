@@ -3,6 +3,7 @@ local theme = dofile("/mjcore/core/theme.lua")
 local ui = dofile("/mjcore/core/ui.lua")
 local logger = dofile("/mjcore/core/logger.lua")
 local logo = dofile("/mjcore/assets/logo.lua")
+local node = dofile("/mjcore/core/node.lua")
 
 local BOOT_DURATION = 2.7
 local BAR_STEPS = 27
@@ -116,4 +117,8 @@ for step = 0, BAR_STEPS do
 end
 
 logger.log("Arranque visual completado en " .. monitorName)
-shell.run("/mjcore/desktop.lua")
+if node.role == "server" then
+    parallel.waitForAny(function() shell.run("/mjcore/desktop.lua") end, function() shell.run("/mjcore/server.lua") end)
+else
+    shell.run("/mjcore/desktop.lua")
+end

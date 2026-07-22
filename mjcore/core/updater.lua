@@ -7,7 +7,8 @@ local PRESERVE_FILES = {
     ["mjcore/data/m-Mia.lua"] = true,
     ["mjcore/data/mia_detector.lua"] = true,
     ["mjcore/data/t-J0gar.lua"] = true,
-    ["mjcore/data/t-Mia.lua"] = true
+    ["mjcore/data/t-Mia.lua"] = true,
+    ["mjcore/data/node.lua"] = true
 }
 
 local function ensureParent(path)

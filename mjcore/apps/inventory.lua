@@ -1,242 +1,54 @@
 return function(context)
-    local inventoryCore = dofile("/mjcore/core/inventory.lua")
-
-    local app = {
-        id = "inventory",
-        title = "INVENTARIO",
-        data = nil,
-        error = nil,
-        page = 1,
-        sortMode = "count",
-        descending = true,
-        pageSize = 4,
-        buttons = {},
-        originalScale = context.config.textScale
-    }
-
-    local function inside(button, x, y)
-        return x >= button.x and x < button.x + button.w
-           and y >= button.y and y < button.y + button.h
+    local node = dofile("/mjcore/core/node.lua")
+    local network = dofile("/mjcore/core/network.lua")
+    local logistics = dofile("/mjcore/core/logistics.lua")
+    local app = {id="inventory",title="INVENTARIO",data=nil,error=nil,message=nil,page=1,pageSize=6,buttons={},originalScale=context.config.textScale}
+    local amounts={1,16,32,64}
+    local function inside(b,x,y) return x>=b.x and x<b.x+b.w and y>=b.y and y<b.y+b.h end
+    local function scan()
+        if node.role=="terminal" then return network.request("inventory_scan",{},4) end
+        return logistics.scan()
     end
-
-    local function sortItems(self)
-        if not self.data then return end
-
-        table.sort(self.data.items, function(a, b)
-            if self.sortMode == "name" then
-                local left = string.lower(a.displayName or a.name)
-                local right = string.lower(b.displayName or b.name)
-                if left == right then return a.count > b.count end
-                return self.descending and left > right or left < right
-
-            elseif self.sortMode == "mod" then
-                if a.mod == b.mod then
-                    return a.displayName < b.displayName
-                end
-                return self.descending and a.mod > b.mod or a.mod < b.mod
-
-            else
-                if a.count == b.count then
-                    return a.displayName < b.displayName
-                end
-                return self.descending and a.count > b.count or a.count < b.count
-            end
-        end)
+    local function deliver(item,count)
+        if node.role=="terminal" then return network.request("inventory_deliver",{player=node.player,item=item.name,count=count},4) end
+        return logistics.deliver(node.player,item.name,count)
     end
-
-    local function refresh(self, ctx)
-        self.error = nil
-        local result, err = inventoryCore.scan()
-
-        if not result then
-            self.data = nil
-            self.error = tostring(err)
-            return
-        end
-
-        self.data = result
-        self.page = 1
-        sortItems(self)
+    local function refresh(self)
+        self.error=nil; self.message=nil
+        local result,err=scan(); if not result then self.data=nil; self.error=tostring(err); return end
+        self.data=result; table.sort(self.data.items,function(a,b) if a.count==b.count then return a.displayName<b.displayName end return a.count>b.count end)
+        local pages=math.max(1,math.ceil(#self.data.items/self.pageSize)); if self.page>pages then self.page=pages end
     end
-
-    function app:start(ctx)
-        -- El inventario usa una escala mayor para que sea legible.
-        ctx.monitor.setTextScale(ctx.config.textScale)
-        refresh(self, ctx)
-    end
-
-    function app:close(ctx)
-        ctx.monitor.setTextScale(self.originalScale)
-    end
-
+    function app:start(ctx) ctx.monitor.setTextScale(ctx.config.textScale); refresh(self) end
+    function app:close(ctx) ctx.monitor.setTextScale(self.originalScale) end
     function app:draw(ctx)
-        local monitor = ctx.monitor
-        local ui = ctx.ui
-        local theme = ctx.theme
-        local w, h = monitor.getSize()
-
-        monitor.setBackgroundColor(theme.background)
-        monitor.clear()
-        self.buttons = {}
-
-        ui.fill(monitor, 1, 1, w, 2, theme.topbar)
-        ui.write(monitor, 2, 1, self.title, theme.text, theme.topbar)
-        ui.footer(monitor, theme, "")
-
-        if self.data then
-            local typeText = tostring(self.data.totalTypes) .. " TIPOS"
-            ui.write(monitor, w - #typeText - 1, 1, typeText, theme.accent, theme.topbar)
+        local m,ui,theme=ctx.monitor,ctx.ui,ctx.theme; local w,h=m.getSize(); m.setBackgroundColor(theme.background);m.clear();self.buttons={}
+        ui.fill(m,1,1,w,2,theme.topbar);ui.write(m,2,1,"INVENTARIO",theme.text,theme.topbar);ui.write(m,w-#node.player-1,1,node.player,theme.accent,theme.topbar)
+        if self.error then ui.center(m,math.floor(h/2),ui.clip(self.error,w-4),theme.danger,theme.background); table.insert(self.buttons,ui.closeButton(m,theme)); return end
+        if not self.data then return end
+        local top=3; local navY=h-3; local availableH=navY-top; local cols=w>=39 and 3 or 2; local gap=1; local margin=1
+        local cardW=math.max(10,math.floor((w-margin*2-(cols-1)*gap)/cols)); local cardH=math.max(5,math.floor(availableH/2)); local rows=math.max(1,math.floor(availableH/(cardH+gap))); self.pageSize=math.max(1,cols*rows)
+        local pages=math.max(1,math.ceil(#self.data.items/self.pageSize)); if self.page>pages then self.page=pages end
+        local first=(self.page-1)*self.pageSize+1
+        for slot=1,self.pageSize do
+            local item=self.data.items[first+slot-1]; if item then
+                local col=(slot-1)%cols; local row=math.floor((slot-1)/cols); local x=margin+col*(cardW+gap); local y=top+row*(cardH+gap)
+                ui.fill(m,x,y,cardW,cardH,theme.panel);ui.border(m,x,y,cardW,cardH,theme.panelAlt,theme.panel)
+                ui.center(m,y+1,ui.clip(item.displayName,cardW-2),theme.text,theme.panel);ui.center(m,y+2,ui.formatNumber(item.count),theme.accent,theme.panel)
+                local by=y+cardH-1; local bw=math.max(2,math.floor((cardW-2)/4)); local bx=x+1
+                for i,amount in ipairs(amounts) do local label=amount==1 and "1" or tostring(amount); local actualW=(i==4) and (x+cardW-1-bx) or bw; ui.fill(m,bx,by,actualW,1,theme.button);ui.centerInBox(m,bx,by,actualW,1,label,theme.buttonText,theme.button);table.insert(self.buttons,{id="take",item=item,count=amount,x=bx,y=by,w=actualW,h=1});bx=bx+actualW end
+            end
         end
-
-        local controls = {
-            { id = "sortCount", label = "CANT." },
-            { id = "sortName", label = "NOMBRE" },
-            { id = "sortMod", label = "MOD" },
-            { id = "refresh", label = "RECARGAR" }
-        }
-
-        local gap = 1
-        local controlW = math.floor((w - 5 - gap * 3) / 4)
-        local x = 2
-
-        for _, control in ipairs(controls) do
-            local active =
-                (control.id == "sortCount" and self.sortMode == "count") or
-                (control.id == "sortName" and self.sortMode == "name") or
-                (control.id == "sortMod" and self.sortMode == "mod")
-
-            ui.smallButton(monitor, x, 4, controlW, control.label, active, theme)
-            table.insert(self.buttons, {
-                id = control.id,
-                x = x,
-                y = 4,
-                w = controlW,
-                h = 3
-            })
-
-            x = x + controlW + gap
-        end
-
-        if self.error then
-            ui.center(monitor, math.floor(h / 2) - 1, "ERROR DE INVENTARIO", theme.danger, theme.background)
-            ui.center(monitor, math.floor(h / 2) + 1, ui.clip(self.error, w - 6), theme.muted, theme.background)
+        ui.fill(m,1,navY,w,3,theme.footer);ui.write(m,2,navY+1,"<",theme.text,theme.footer);ui.center(m,navY+1,tostring(self.page).."/"..tostring(pages),theme.accent,theme.footer);ui.write(m,w-1,navY+1,">",theme.text,theme.footer)
+        table.insert(self.buttons,{id="prev",x=1,y=navY,w=5,h=3});table.insert(self.buttons,{id="next",x=w-4,y=navY,w=5,h=3});table.insert(self.buttons,ui.closeButton(m,theme))
+        if self.message then ui.notification(m,{text=self.message,type="success"},theme) end
+    end
+    function app:touch(x,y,ctx)
+        for _,b in ipairs(self.buttons) do if inside(b,x,y) then
+            if b.id=="close" then return "close" elseif b.id=="prev" then self.page=math.max(1,self.page-1) elseif b.id=="next" then local pages=math.max(1,math.ceil(#self.data.items/self.pageSize));self.page=math.min(pages,self.page+1) elseif b.id=="take" then local result,err=deliver(b.item,b.count); if result then self.message="ENTREGADOS "..tostring(result.moved); refresh(self); self.message="ENTREGADOS "..tostring(result.moved) else self.error=tostring(err) end end
             return
-        end
-
-        if self.data then
-            local listTop = 8
-            local footerY = h - 4
-            local available = footerY - listTop - 1
-            local cardH = 4
-            self.pageSize = math.max(1, math.floor(available / (cardH + 1)))
-
-            local pages = math.max(1, math.ceil(#self.data.items / self.pageSize))
-            if self.page > pages then self.page = pages end
-
-            local first = (self.page - 1) * self.pageSize + 1
-            local last = math.min(#self.data.items, first + self.pageSize - 1)
-            local y = listTop
-
-            for index = first, last do
-                local item = self.data.items[index]
-                local count = ui.formatNumber(item.count)
-
-                ui.fill(monitor, 2, y, w - 3, cardH, theme.panel)
-                ui.border(monitor, 2, y, w - 3, cardH, theme.panelAlt, theme.panel)
-
-                ui.write(
-                    monitor,
-                    4,
-                    y + 1,
-                    ui.clip(item.displayName, w - #count - 10),
-                    theme.text,
-                    theme.panel
-                )
-                ui.write(
-                    monitor,
-                    w - #count - 3,
-                    y + 1,
-                    count,
-                    theme.accent,
-                    theme.panel
-                )
-                ui.write(
-                    monitor,
-                    4,
-                    y + 2,
-                    ui.clip(item.mod, w - 8),
-                    theme.muted,
-                    theme.panel
-                )
-
-                y = y + cardH + 1
-            end
-
-            local navW = 10
-            ui.smallButton(monitor, 2, footerY, navW, "<", false, theme)
-            table.insert(self.buttons, { id = "previous", x = 2, y = footerY, w = navW, h = 3 })
-
-            ui.smallButton(monitor, w - navW - 1, footerY, navW, ">", false, theme)
-            table.insert(self.buttons, { id = "next", x = w - navW - 1, y = footerY, w = navW, h = 3 })
-
-            ui.center(monitor, footerY + 1, tostring(self.page) .. "/" .. tostring(pages), theme.text, theme.background)
-
-            ui.fill(monitor, 1, h, w, 1, theme.topbar)
-            local total = "TOTAL " .. ui.formatNumber(self.data.totalItems)
-            ui.write(monitor, 2, h, total, theme.text, theme.topbar)
-        end
-        table.insert(self.buttons, ui.closeButton(monitor, theme))
+        end end
     end
-
-    function app:touch(x, y, ctx)
-        for _, button in ipairs(self.buttons) do
-            if inside(button, x, y) then
-                if button.id == "close" then return "close" end
-                if button.id == "refresh" then
-                    refresh(self, ctx)
-
-                elseif button.id == "sortCount" then
-                    if self.sortMode == "count" then
-                        self.descending = not self.descending
-                    else
-                        self.sortMode = "count"
-                        self.descending = true
-                    end
-                    sortItems(self)
-                    self.page = 1
-
-                elseif button.id == "sortName" then
-                    if self.sortMode == "name" then
-                        self.descending = not self.descending
-                    else
-                        self.sortMode = "name"
-                        self.descending = false
-                    end
-                    sortItems(self)
-                    self.page = 1
-
-                elseif button.id == "sortMod" then
-                    if self.sortMode == "mod" then
-                        self.descending = not self.descending
-                    else
-                        self.sortMode = "mod"
-                        self.descending = false
-                    end
-                    sortItems(self)
-                    self.page = 1
-
-                elseif button.id == "previous" then
-                    self.page = math.max(1, self.page - 1)
-
-                elseif button.id == "next" and self.data then
-                    local pages = math.max(1, math.ceil(#self.data.items / self.pageSize))
-                    self.page = math.min(pages, self.page + 1)
-                end
-
-                return
-            end
-        end
-    end
-
+    function app:update(ctx) if self.error and node.role=="terminal" then return end end
     return app
 end
