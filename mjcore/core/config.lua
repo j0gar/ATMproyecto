@@ -1,6 +1,6 @@
 return {
-    version = "0.8.4",
-    codename = "Pocket Admin",
+    version = "0.8.5",
+    codename = "Hybrid Pocket",
 
     github = {
         owner = "j0gar",

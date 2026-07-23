@@ -62,7 +62,7 @@ Los mismos comandos funcionan con el perfil `mia`. En un terminal secundario, lo
 
 ## M&J Pocket
 
-La v0.8.4 incluye un cliente para Advanced Wireless Pocket Computer.
+La v0.8.5 incluye un cliente para Advanced Wireless Pocket Computer.
 
 Configuralo una vez con:
 
@@ -78,3 +78,7 @@ Funciones iniciales:
 - buscar objetos y pedirlos al Inventory Manager;
 - comprobar la conexion con el servidor;
 - salir a la consola sin detener los ordenadores de los monitores.
+
+
+## Pocket hibrida
+La Pocket usa botones tactiles para navegar y el teclado del juego para escribir tareas, busquedas y cantidades personalizadas. Tambien admite flechas, ENTER, rueda y teclas numericas.

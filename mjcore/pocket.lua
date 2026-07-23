@@ -2,119 +2,194 @@ local network = dofile("/mjcore/core/network.lua")
 local node = dofile("/mjcore/core/node.lua")
 local config = dofile("/mjcore/core/config.lua")
 
-local function clear(title)
-    term.setBackgroundColor(colors.black)
-    term.setTextColor(colors.white)
-    term.clear()
-    term.setCursorPos(1, 1)
-    term.setTextColor(colors.cyan)
-    print("M&J POCKET " .. tostring(config.version))
-    term.setTextColor(colors.lightGray)
-    print(title or "")
-    print(string.rep("-", math.max(1, select(1, term.getSize()))))
-    term.setTextColor(colors.white)
-end
+local W, H = term.getSize()
+local BG = colors.black
+local FG = colors.white
+local ACCENT = colors.cyan
+local MUTED = colors.gray
+local BUTTON = colors.gray
+local ACTIVE = colors.blue
+local GOOD = colors.lime
+local BAD = colors.red
 
-local function pause(message)
-    print("")
-    term.setTextColor(colors.gray)
-    print(message or "Pulsa ENTER para continuar")
-    term.setTextColor(colors.white)
-    read()
-end
-
-local function prompt(label)
-    term.setTextColor(colors.yellow)
-    write(label)
-    term.setTextColor(colors.white)
-    return read()
-end
-
-local function request(kind, payload, timeout)
-    term.setTextColor(colors.gray)
-    print("Conectando con servidor " .. tostring(node.serverId) .. "...")
-    term.setTextColor(colors.white)
-    local result, err = network.request(kind, payload or {}, timeout or 5)
-    if not result then
-        term.setTextColor(colors.red)
-        print("ERROR: " .. tostring(err or "Sin respuesta"))
-        term.setTextColor(colors.white)
+local function fill(y, bg, text, fg)
+    term.setBackgroundColor(bg or BG)
+    term.setTextColor(fg or FG)
+    term.setCursorPos(1, y)
+    term.write(string.rep(" ", W))
+    if text then
+        text = tostring(text)
+        if #text > W - 2 then text = text:sub(1, W - 2) end
+        term.setCursorPos(math.max(1, math.floor((W - #text) / 2) + 1), y)
+        term.write(text)
     end
+end
+
+local function header(title)
+    term.setBackgroundColor(BG)
+    term.setTextColor(FG)
+    term.clear()
+    fill(1, ACCENT, "M&J POCKET " .. tostring(config.version), colors.black)
+    fill(2, BG, title or "", ACCENT)
+    fill(3, BG, string.rep("-", W), MUTED)
+end
+
+local function message(title, text, color)
+    header(title)
+    term.setTextColor(color or FG)
+    term.setCursorPos(2, 5)
+    print(tostring(text or ""))
+    fill(H, BUTTON, "TOCA O ENTER", FG)
+    while true do
+        local e, a, b, c = os.pullEvent()
+        if e == "mouse_click" or (e == "key" and (a == keys.enter or a == keys.space or a == keys.backspace)) then return end
+    end
+end
+
+local function trim(value)
+    return tostring(value or ""):gsub("^%s+", ""):gsub("%s+$", "")
+end
+
+local function input(title, label, allowEmpty)
+    header(title)
+    term.setTextColor(colors.yellow)
+    term.setCursorPos(1, 5)
+    print(label or "Escribe y pulsa ENTER:")
+    term.setTextColor(FG)
+    term.setCursorPos(1, 7)
+    local value = trim(read())
+    if value == "" and not allowEmpty then return nil end
+    return value
+end
+
+local function menu(title, items, options)
+    options = options or {}
+    local selected = 1
+    local firstRow = 4
+    local lastRow = H - 1
+    local visible = math.max(1, lastRow - firstRow + 1)
+    local offset = 0
+
+    local function ensureVisible()
+        if selected <= offset then offset = selected - 1 end
+        if selected > offset + visible then offset = selected - visible end
+        if offset < 0 then offset = 0 end
+    end
+
+    local function draw()
+        header(title)
+        for row = firstRow, lastRow do fill(row, BG, "", FG) end
+        for row = 1, visible do
+            local index = offset + row
+            local item = items[index]
+            if item then
+                local bg = index == selected and ACTIVE or BUTTON
+                local prefix = item.prefix or ""
+                local label = prefix .. tostring(item.label or item.value or "")
+                fill(firstRow + row - 1, bg, label, FG)
+            end
+        end
+        local hint = options.hint or "TOCA / FLECHAS + ENTER"
+        fill(H, BG, hint, MUTED)
+    end
+
+    if #items == 0 then return nil end
+    while true do
+        ensureVisible()
+        draw()
+        local e, a, b, c = os.pullEvent()
+        if e == "mouse_click" then
+            local y = c
+            if y >= firstRow and y <= lastRow then
+                local index = offset + (y - firstRow + 1)
+                if items[index] then return items[index].value, index, items[index] end
+            end
+        elseif e == "mouse_scroll" then
+            selected = math.max(1, math.min(#items, selected + (a > 0 and 1 or -1)))
+        elseif e == "key" then
+            if a == keys.up then selected = math.max(1, selected - 1)
+            elseif a == keys.down then selected = math.min(#items, selected + 1)
+            elseif a == keys.enter or a == keys.space then return items[selected].value, selected, items[selected]
+            elseif a == keys.backspace or a == keys.escape then return options.backValue
+            end
+        elseif e == "char" then
+            local number = tonumber(a)
+            if number and number >= 1 and number <= #items then return items[number].value, number, items[number] end
+            if a == "q" and options.backValue ~= nil then return options.backValue end
+        end
+    end
+end
+
+local function request(kind, payload, timeout, quiet)
+    if not quiet then
+        header("CONECTANDO")
+        term.setCursorPos(2, 5)
+        term.setTextColor(MUTED)
+        print("Servidor " .. tostring(node.serverId) .. "...")
+    end
+    local result, err = network.request(kind, payload or {}, timeout or 5)
+    if not result and not quiet then message("ERROR", tostring(err or "Sin respuesta"), BAD) end
     return result, err
 end
 
 local function chooseProfile()
-    clear("TAREAS")
-    print("1. J0GAR")
-    print("2. MIA")
-    print("0. Atras")
-    local choice = prompt("> ")
-    if choice == "1" then return "j0gar" end
-    if choice == "2" then return "mia" end
-    return nil
+    return menu("TAREAS", {
+        {label = "J0GAR", value = "j0gar"},
+        {label = "MIA", value = "mia"},
+        {label = "ATRAS", value = false}
+    }, {backValue = false})
 end
 
-local function printTasks(data)
-    local tasks = data and data.tasks or {}
-    if #tasks == 0 then
-        print("No hay tareas.")
-        return
-    end
-    for index, task in ipairs(tasks) do
-        local mark = task.done and "[X]" or "[ ]"
-        print(tostring(index) .. ". " .. mark .. " " .. tostring(task.text or ""))
+local function taskAction(profile, task, index)
+    local mark = task.done and "[X] " or "[ ] "
+    local choice = menu("TAREA " .. tostring(index), {
+        {label = mark .. tostring(task.text or "") , value = "none"},
+        {label = task.done and "MARCAR PENDIENTE" or "MARCAR HECHA", value = "toggle"},
+        {label = "ELIMINAR", value = "remove"},
+        {label = "ATRAS", value = "back"}
+    }, {backValue = "back"})
+
+    if choice == "toggle" then
+        local result = request("tasks_toggle", {profile = profile, index = index})
+        if result then message("TAREAS", "Tarea actualizada.", GOOD) end
+    elseif choice == "remove" then
+        local confirm = menu("CONFIRMAR", {
+            {label = "SI, ELIMINAR", value = true},
+            {label = "NO", value = false}
+        }, {backValue = false})
+        if confirm then
+            local result = request("tasks_remove", {profile = profile, index = index})
+            if result then message("TAREAS", "Tarea eliminada.", GOOD) end
+        end
     end
 end
 
 local function taskProfile(profile)
     while true do
-        clear("TAREAS " .. string.upper(profile))
         local data = request("tasks_get", {profile = profile})
-        if data then printTasks(data) end
-        print("")
-        print("1. Anadir tarea")
-        print("2. Marcar/desmarcar")
-        print("3. Eliminar tarea")
-        print("4. Recargar")
-        print("0. Atras")
-        local choice = prompt("> ")
+        if not data then return end
+        local items = {{label = "+ ANADIR TAREA", value = "add"}}
+        for index, task in ipairs(data.tasks or {}) do
+            items[#items + 1] = {
+                label = (task.done and "[X] " or "[ ] ") .. tostring(task.text or ""),
+                value = "task",
+                task = task,
+                taskIndex = index
+            }
+        end
+        items[#items + 1] = {label = "RECARGAR", value = "reload"}
+        items[#items + 1] = {label = "ATRAS", value = "back"}
 
-        if choice == "0" then
-            return
-        elseif choice == "1" then
-            clear("NUEVA TAREA " .. string.upper(profile))
-            local text = prompt("Texto: ")
-            text = tostring(text or ""):gsub("^%s+", ""):gsub("%s+$", "")
-            if text ~= "" then
+        local choice, _, item = menu("TAREAS " .. string.upper(profile), items, {backValue = "back"})
+        if choice == "back" then return
+        elseif choice == "add" then
+            local text = input("NUEVA TAREA", "Escribe la tarea y pulsa ENTER:")
+            if text then
                 local result = request("tasks_add", {profile = profile, text = text})
-                if result then
-                    term.setTextColor(colors.lime)
-                    print("Tarea anadida.")
-                    term.setTextColor(colors.white)
-                end
+                if result then message("TAREAS", "Tarea anadida.", GOOD) end
             end
-            pause()
-        elseif choice == "2" then
-            local index = tonumber(prompt("Numero: "))
-            if index then
-                local result = request("tasks_toggle", {profile = profile, index = index})
-                if result then print("Tarea actualizada.") end
-            else
-                printError("Numero invalido")
-            end
-            pause()
-        elseif choice == "3" then
-            local index = tonumber(prompt("Numero: "))
-            if index then
-                local confirm = string.lower(prompt("Eliminar? (s/n): "))
-                if confirm == "s" or confirm == "si" then
-                    local result = request("tasks_remove", {profile = profile, index = index})
-                    if result then print("Tarea eliminada.") end
-                end
-            else
-                printError("Numero invalido")
-            end
-            pause()
+        elseif choice == "task" and item then
+            taskAction(profile, item.task, item.taskIndex)
         end
     end
 end
@@ -127,99 +202,113 @@ local function tasksMenu()
     end
 end
 
+local function chooseAmount()
+    local choice = menu("CANTIDAD", {
+        {label = "1", value = 1},
+        {label = "16", value = 16},
+        {label = "32", value = 32},
+        {label = "64", value = 64},
+        {label = "OTRA (ESCRIBIR)", value = "custom"},
+        {label = "ATRAS", value = false}
+    }, {backValue = false})
+    if choice == "custom" then
+        local raw = input("CANTIDAD", "Escribe una cantidad (1-64):")
+        local amount = tonumber(raw)
+        if not amount then return nil end
+        return math.max(1, math.min(64, math.floor(amount)))
+    end
+    return choice
+end
+
 local function inventoryMenu()
     while true do
-        clear("INVENTARIO")
-        local query = prompt("Buscar (vacio=atras): ")
-        query = string.lower(tostring(query or ""))
-        if query == "" then return end
+        local query = input("INVENTARIO", "Buscar objeto (vacio = atras):", true)
+        if not query or query == "" then return end
+        query = string.lower(query)
 
         local data = request("inventory_scan", {})
-        if not data then pause(); return end
+        if not data then return end
         local matches = {}
         for _, item in ipairs(data.items or {}) do
             local name = string.lower(tostring(item.name or ""))
             local display = string.lower(tostring(item.displayName or ""))
-            if name:find(query, 1, true) or display:find(query, 1, true) then
-                matches[#matches + 1] = item
-            end
+            if name:find(query, 1, true) or display:find(query, 1, true) then matches[#matches + 1] = item end
         end
         table.sort(matches, function(a, b) return (tonumber(a.count) or 0) > (tonumber(b.count) or 0) end)
 
-        clear("RESULTADOS: " .. query)
         if #matches == 0 then
-            print("No se encontraron objetos.")
-            pause()
+            message("INVENTARIO", "No se encontraron objetos.", colors.orange)
         else
-            local shown = math.min(9, #matches)
-            for i = 1, shown do
+            local items = {}
+            for i = 1, math.min(#matches, 30) do
                 local item = matches[i]
-                print(tostring(i) .. ". " .. tostring(item.displayName or item.name) .. " x" .. tostring(item.count or 0))
+                items[#items + 1] = {
+                    label = tostring(item.displayName or item.name) .. " x" .. tostring(item.count or 0),
+                    value = "item",
+                    item = item
+                }
             end
-            print("0. Nueva busqueda")
-            local selected = tonumber(prompt("Objeto: "))
-            if selected and selected >= 1 and selected <= shown then
-                local count = tonumber(prompt("Cantidad (1-64): ")) or 1
-                count = math.max(1, math.min(64, math.floor(count)))
-                local item = matches[selected]
-                local result = request("inventory_deliver", {
-                    player = node.player,
-                    item = item.name,
-                    count = count
-                })
-                if result then
-                    term.setTextColor(colors.lime)
-                    print("Entregados: " .. tostring(result.moved or 0))
-                    term.setTextColor(colors.white)
+            items[#items + 1] = {label = "NUEVA BUSQUEDA", value = "back"}
+            local choice, _, selected = menu("RESULTADOS", items, {backValue = "back"})
+            if choice == "item" and selected then
+                local amount = chooseAmount()
+                if amount then
+                    local result = request("inventory_deliver", {
+                        player = node.player,
+                        item = selected.item.name,
+                        count = amount
+                    })
+                    if result then message("INVENTARIO", "Entregados: " .. tostring(result.moved or 0), GOOD) end
                 end
-                pause()
             end
         end
     end
 end
 
 local function networkMenu()
-    clear("RED")
-    local result = request("ping", {}, 5)
+    local result, err = request("ping", {}, 5, true)
     if result then
-        term.setTextColor(colors.lime)
+        header("ESTADO DE RED")
+        term.setCursorPos(2, 5)
+        term.setTextColor(GOOD)
         print("Servidor conectado")
-        term.setTextColor(colors.white)
-        print("ID servidor: " .. tostring(result.server or node.serverId))
+        term.setTextColor(FG)
+        print("ID: " .. tostring(result.server or node.serverId))
         print("Canal: " .. tostring(node.channel))
-        print("Modem: " .. tostring(network.getModemName() or "automatico"))
+        print("Modem: " .. tostring(network.getModemName() or "auto"))
         print("Jugador: " .. tostring(node.player))
+        fill(H, BUTTON, "TOCA O ENTER", FG)
+        while true do
+            local e, a = os.pullEvent()
+            if e == "mouse_click" or (e == "key" and (a == keys.enter or a == keys.backspace)) then return end
+        end
+    else
+        message("RED", tostring(err or "Servidor sin respuesta"), BAD)
     end
-    pause()
 end
 
 local ok, modem = network.open()
 if not ok then
-    clear("ERROR DE RED")
-    printError(tostring(modem))
-    pause("Pulsa ENTER para salir")
+    message("ERROR DE RED", tostring(modem), BAD)
     return
 end
 
 while true do
-    clear("MENU PRINCIPAL")
-    print("1. Tareas")
-    print("2. Inventario")
-    print("3. Estado de red")
-    print("4. Reiniciar Pocket")
-    print("0. Salir a consola")
-    local choice = prompt("> ")
+    local choice = menu("MENU PRINCIPAL", {
+        {label = "TAREAS", value = "tasks"},
+        {label = "INVENTARIO", value = "inventory"},
+        {label = "ESTADO DE RED", value = "network"},
+        {label = "REINICIAR POCKET", value = "reboot"},
+        {label = "SALIR A CONSOLA", value = "exit"}
+    }, {backValue = "exit"})
 
-    if choice == "1" then
-        tasksMenu()
-    elseif choice == "2" then
-        inventoryMenu()
-    elseif choice == "3" then
-        networkMenu()
-    elseif choice == "4" then
-        os.reboot()
-    elseif choice == "0" then
-        clear("CONSOLA")
+    if choice == "tasks" then tasksMenu()
+    elseif choice == "inventory" then inventoryMenu()
+    elseif choice == "network" then networkMenu()
+    elseif choice == "reboot" then os.reboot()
+    elseif choice == "exit" then
+        header("CONSOLA")
+        term.setCursorPos(1, 5)
         print("M&J Pocket cerrado.")
         return
     end
