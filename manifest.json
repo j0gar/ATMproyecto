@@ -1,5 +1,5 @@
 {
-  "version": "0.8.5",
+  "version": "0.9.0",
   "files": [
     "startup.lua",
     "mj.lua",
@@ -52,7 +52,14 @@
     "mjcore/core/network.lua",
     "mjcore/core/logistics.lua",
     "mjcore/server.lua",
-    "mjcore/data/node.lua"
+    "mjcore/data/node.lua",
+    "mjcore/core/storage.lua",
+    "mjcore/core/player_inventory.lua",
+    "mjcore/services/logistics.lua",
+    "mjcore/machines/emerald_furnace.lua",
+    "mjcore/apps/logistics.lua",
+    "mjcore/assets/icons/logistics.lua",
+    "mjcore/core/app_registry.lua"
   ],
-  "codename": "Pocket Admin"
+  "codename": "Logistics Foundation"
 }

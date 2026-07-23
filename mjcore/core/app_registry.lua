@@ -1,0 +1,11 @@
+return {
+  {id="inventory",name="INVENTARIO",subtitle="Storage real",icon="inventory",path="/mjcore/apps/inventory.lua",order=1},
+  {id="logistics",name="LOGISTICA",subtitle="Automatizacion",icon="logistics",path="/mjcore/apps/logistics.lua",order=2},
+  {id="players",name="JUGADORES",subtitle="Presencia",icon="players",path="/mjcore/apps/players.lua",order=3},
+  {id="todo",name="TAREAS",subtitle="Pendientes",icon="todo",path="/mjcore/apps/todo.lua",order=4},
+  {id="energy",name="ENERGIA",subtitle="Produccion",icon="energy",path="/mjcore/apps/energy.lua",order=5},
+  {id="alarms",name="ALARMAS",subtitle="Avisos",icon="alarms",path="/mjcore/apps/alarms.lua",order=6},
+  {id="system",name="SISTEMA",subtitle="Control total",icon="system",path="/mjcore/apps/system.lua",order=7},
+  {id="settings",name="AJUSTES",subtitle="Configuracion",icon="settings",path="/mjcore/apps/settings.lua",order=8},
+  {id="updater",name="ACTUALIZAR",subtitle="GitHub",icon="updater",path="/mjcore/apps/updater.lua",order=9}
+}

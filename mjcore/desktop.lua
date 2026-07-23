@@ -52,7 +52,8 @@ local iconColours = {
     alarms = colors.red,
     settings = colors.lightGray,
     updater = colors.cyan,
-    system = colors.white
+    system = colors.white,
+    logistics = colors.green
 }
 
 local function loadRegistry()
@@ -61,6 +62,7 @@ local function loadRegistry()
     if type(node.apps) == "table" then
         local allowed = {}
         for _, id in ipairs(node.apps) do allowed[id] = true end
+        if node.role == "terminal" then allowed.logistics = true end
 
         local filtered = {}
         for _, entry in ipairs(registry) do

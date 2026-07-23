@@ -24,6 +24,14 @@ term.clear()
 term.setCursorPos(1, 1)
 
 if not monitor then
+    if node.role == "server" then
+        logger.log("Arranque headless: servidor y logistica sin monitor")
+        parallel.waitForAll(
+            function() shell.run("/mjcore/server.lua") end,
+            function() shell.run("/mjcore/services/logistics.lua") end
+        )
+        return
+    end
     term.setTextColor(colors.red)
     print("M&J Core no encuentra ningun monitor.")
     logger.log("No se encontro monitor", "ERROR")
@@ -105,9 +113,10 @@ end
 logger.log("Arranque completado en " .. monitorName .. " como " .. tostring(node.role))
 
 if node.role == "server" then
-    parallel.waitForAny(
+    parallel.waitForAll(
         function() shell.run("/mjcore/desktop.lua") end,
-        function() shell.run("/mjcore/server.lua") end
+        function() shell.run("/mjcore/server.lua") end,
+        function() shell.run("/mjcore/services/logistics.lua") end
     )
 else
     shell.run("/mjcore/desktop.lua")

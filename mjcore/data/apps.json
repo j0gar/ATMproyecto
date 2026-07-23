@@ -8,12 +8,20 @@
     "order": 1
   },
   {
+    "id": "logistics",
+    "name": "LOGISTICA",
+    "subtitle": "Automatizacion",
+    "icon": "logistics",
+    "path": "/mjcore/apps/logistics.lua",
+    "order": 2
+  },
+  {
     "id": "players",
     "name": "JUGADORES",
     "subtitle": "Presencia",
     "icon": "players",
     "path": "/mjcore/apps/players.lua",
-    "order": 2
+    "order": 3
   },
   {
     "id": "todo",
@@ -21,7 +29,7 @@
     "subtitle": "Pendientes",
     "icon": "todo",
     "path": "/mjcore/apps/todo.lua",
-    "order": 3
+    "order": 4
   },
   {
     "id": "energy",
@@ -29,7 +37,7 @@
     "subtitle": "Produccion",
     "icon": "energy",
     "path": "/mjcore/apps/energy.lua",
-    "order": 4
+    "order": 5
   },
   {
     "id": "alarms",
@@ -37,7 +45,7 @@
     "subtitle": "Avisos",
     "icon": "alarms",
     "path": "/mjcore/apps/alarms.lua",
-    "order": 5
+    "order": 6
   },
   {
     "id": "system",
@@ -45,7 +53,7 @@
     "subtitle": "Control total",
     "icon": "system",
     "path": "/mjcore/apps/system.lua",
-    "order": 6
+    "order": 7
   },
   {
     "id": "settings",
@@ -53,7 +61,7 @@
     "subtitle": "Configuracion",
     "icon": "settings",
     "path": "/mjcore/apps/settings.lua",
-    "order": 7
+    "order": 8
   },
   {
     "id": "updater",
@@ -61,6 +69,6 @@
     "subtitle": "GitHub",
     "icon": "updater",
     "path": "/mjcore/apps/updater.lua",
-    "order": 8
+    "order": 9
   }
 ]

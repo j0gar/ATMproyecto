@@ -222,8 +222,20 @@ end
 
 local function inventoryMenu()
     while true do
+        local action = menu("INVENTARIO", {
+            {label = "BUSCAR OBJETO", value = "search"},
+            {label = "GUARDAR TODO", value = "store"},
+            {label = "ATRAS", value = "back"}
+        }, {backValue = "back"})
+        if action == "back" then return end
+        if action == "store" then
+            local result = request("inventory_store_known", {player = node.player}, 6)
+            if result then
+                message("INVENTARIO", "Guardados: " .. tostring(result.stored or 0) .. " | Dejados: " .. tostring(result.skipped or 0), GOOD)
+            end
+        else
         local query = input("INVENTARIO", "Buscar objeto (vacio = atras):", true)
-        if not query or query == "" then return end
+        if query and query ~= "" then
         query = string.lower(query)
 
         local data = request("inventory_scan", {})
@@ -262,6 +274,30 @@ local function inventoryMenu()
                 end
             end
         end
+        end
+        end
+    end
+end
+
+
+local function logisticsMenu()
+    local state = request("logistics_status", {}, 4)
+    if not state then return end
+    local machine = (state.machines or {})[1]
+    header("LOGISTICA")
+    term.setCursorPos(2, 4)
+    term.setTextColor(state.active and GOOD or BAD)
+    print("Estado: " .. (state.active and "ACTIVA" or "INACTIVA"))
+    term.setTextColor(FG)
+    print("Storage: " .. (state.storageConnected and "Conectado" or "Desconectado"))
+    print("Maquina: " .. tostring(machine and machine.name or "Ninguna"))
+    print("Trabajo: " .. tostring(machine and machine.job or "En espera"))
+    print("Cola: " .. tostring(state.queue or 0))
+    print("Combustible: " .. tostring(machine and machine.fuel or 0) .. " carbon")
+    fill(H, BUTTON, "TOCA O ENTER", FG)
+    while true do
+        local e, a = os.pullEvent()
+        if e == "mouse_click" or (e == "key" and (a == keys.enter or a == keys.backspace)) then return end
     end
 end
 
@@ -297,6 +333,7 @@ while true do
     local choice = menu("MENU PRINCIPAL", {
         {label = "TAREAS", value = "tasks"},
         {label = "INVENTARIO", value = "inventory"},
+        {label = "LOGISTICA", value = "logistics"},
         {label = "ESTADO DE RED", value = "network"},
         {label = "REINICIAR POCKET", value = "reboot"},
         {label = "SALIR A CONSOLA", value = "exit"}
@@ -304,6 +341,7 @@ while true do
 
     if choice == "tasks" then tasksMenu()
     elseif choice == "inventory" then inventoryMenu()
+    elseif choice == "logistics" then logisticsMenu()
     elseif choice == "network" then networkMenu()
     elseif choice == "reboot" then os.reboot()
     elseif choice == "exit" then

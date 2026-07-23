@@ -20,6 +20,11 @@ while true do
         if msg.kind=="ping" then ok,result=true,{server=os.getComputerID()}
         elseif msg.kind=="inventory_scan" then result,err=logistics.scan(); ok=result~=nil
         elseif msg.kind=="inventory_deliver" then local p=msg.payload or {}; result,err=logistics.deliver(p.player,p.item,p.count); ok=result~=nil
+        elseif msg.kind=="inventory_store_known" then local p=msg.payload or {}; result,err=logistics.storeKnown(p.player); ok=result~=nil
+        elseif msg.kind=="logistics_status" then
+            local statusPath="/mjcore/data/logistics_state.lua"
+            if fs.exists(statusPath) then local statusOk,status=pcall(dofile,statusPath); if statusOk then ok,result=true,status else ok=false; err=tostring(status) end
+            else ok=false; err="Servicio de logistica sin estado" end
         elseif msg.kind=="tasks_get" then result,err=loadTasks((msg.payload or {}).profile); ok=result~=nil
         elseif msg.kind=="tasks_toggle" then
             local p=msg.payload or {}; local data,path=loadTasks(p.profile)

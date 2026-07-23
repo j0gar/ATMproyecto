@@ -1,3 +1,15 @@
+# M&J Core 0.9.0 — Logistics Foundation
+
+- Nueva API común de almacenamiento (`core/storage.lua`).
+- Separación entre almacenamiento, inventario del jugador y logística de máquinas.
+- Servicio permanente de logística, también en modo servidor sin monitor.
+- Registro modular de máquinas en `mjcore/machines/`.
+- Primera máquina: Emerald Furnace de Iron Furnaces.
+- Extracción automática del output, carbón mantenido en 32 y entrada de materiales con tag `c:raw_materials`.
+- Nueva app LOGISTICA con estado del Storage Controller, máquinas, trabajo y combustible.
+- GUARDAR TODO solo deposita objetos que ya existen en Functional Storage; los desconocidos permanecen en el jugador.
+- El updater preserva cualquier archivo existente bajo `/mjcore/config`, `/mjcore/data` y `/mjcore/logs`.
+
 # M&J Core 0.7.1 — Inventory Manager Fix
 
 - Corrige la detección de Inventory Managers en Advanced Peripherals 0.7.62b.

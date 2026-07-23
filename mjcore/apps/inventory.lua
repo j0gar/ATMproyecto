@@ -44,6 +44,13 @@ return function(context)
         return logistics.deliver(node.player, item.name, count)
     end
 
+    local function storeKnown()
+        if node.role == "terminal" then
+            return network.request("inventory_store_known", {player = node.player}, 6)
+        end
+        return logistics.storeKnown(node.player)
+    end
+
     local function setMessage(self, text)
         self.message = tostring(text)
         self.messageUntil = now() + 3
@@ -158,13 +165,16 @@ return function(context)
 
         ui.fill(m, 1, navY, w, 1, theme.footer)
         ui.write(m, 2, navY, "<", theme.text, theme.footer)
-        ui.center(m, navY, tostring(self.page) .. "/" .. tostring(pages), theme.accent, theme.footer)
+        local saveLabel = "GUARDAR TODO"
+        local saveX = math.max(6, math.floor((w - #saveLabel) / 2) + 1)
+        ui.write(m, saveX, navY, saveLabel, theme.success, theme.footer)
 
         local closeButton = ui.closeButton(m, theme)
         local nextX = math.max(7, closeButton.x - 3)
         ui.write(m, nextX, navY, ">", theme.text, theme.footer)
 
         self.buttons[#self.buttons + 1] = {id = "prev", x = 1, y = navY, w = 5, h = 1}
+        self.buttons[#self.buttons + 1] = {id = "store", x = saveX - 1, y = navY, w = #saveLabel + 2, h = 1}
         self.buttons[#self.buttons + 1] = {id = "next", x = nextX - 1, y = navY, w = 3, h = 1}
         self.buttons[#self.buttons + 1] = closeButton
 
@@ -187,6 +197,14 @@ return function(context)
                     local result, err = deliver(button.item, button.count)
                     if result then
                         setMessage(self, "ENTREGADOS " .. tostring(result.moved or 0))
+                        refresh(self, true)
+                    else
+                        self.error = tostring(err)
+                    end
+                elseif button.id == "store" then
+                    local result, err = storeKnown()
+                    if result then
+                        setMessage(self, "GUARDADOS " .. tostring(result.stored or 0) .. " | DEJADOS " .. tostring(result.skipped or 0))
                         refresh(self, true)
                     else
                         self.error = tostring(err)
