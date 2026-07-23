@@ -1,4 +1,5 @@
 local storage = dofile("/mjcore/core/storage.lua")
+local machineConfig = dofile("/mjcore/core/machine_config.lua")
 local logger = dofile("/mjcore/core/logger.lua")
 local STATE_PATH = "/mjcore/data/logistics_state.lua"
 local CYCLE_SECONDS = 2
@@ -39,7 +40,9 @@ local function findStorageItem(predicate)
 end
 
 local function process(machine)
-    local status = {id=machine.id,name=machine.name or machine.id,connected=false,job="En espera",queue=0,fuel=0}
+    local cfg = machineConfig.load(machine)
+    local status = {id=machine.id,name=machine.name or machine.id,connected=false,enabled=cfg.enabled~=false,job="En espera",queue=0,fuel=0,config=cfg,settings=machine.settings or {}}
+    if cfg.enabled == false then status.job = "Desactivada"; return status end
     if not peripheral.isPresent(machine.peripheral) then return status end
     local inv = peripheral.wrap(machine.peripheral)
     if not inv or type(inv.list) ~= "function" then return status end
@@ -49,9 +52,10 @@ local function process(machine)
 
     local fuelStack = firstStack(inv, machine.slots.fuel)
     status.fuel = fuelStack and fuelStack.count or 0
-    if machine.fuel and status.fuel < machine.fuel.target then
+    local fuelTarget = math.max(0, tonumber(cfg.fuelTarget) or 0)
+    if machine.fuel and status.fuel < fuelTarget then
         local slot = findStorageItem(function(detail) return detail and detail.name == machine.fuel.name end)
-        if slot then storage.push(machine.peripheral, slot, machine.fuel.target - status.fuel, machine.slots.fuel[1]) end
+        if slot then storage.push(machine.peripheral, slot, fuelTarget - status.fuel, machine.slots.fuel[1]) end
         fuelStack = firstStack(inv, machine.slots.fuel); status.fuel = fuelStack and fuelStack.count or 0
     end
 
@@ -62,7 +66,7 @@ local function process(machine)
     else
         local slot, detail = findStorageItem(machine.accepts)
         if slot then
-            local moved = storage.push(machine.peripheral, slot, 64, machine.slots.inputs[1])
+            local moved = storage.push(machine.peripheral, slot, tonumber(cfg.inputBatch) or 64, machine.slots.inputs[1])
             if moved and moved > 0 then status.job = (detail and detail.displayName) or detail.name end
         end
     end

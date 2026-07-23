@@ -132,7 +132,7 @@ elseif command == "task" then
 elseif command == "setup" then
     local role=(args[2] or ""):lower()
     if role~="server" and role~="terminal" and role~="pocket" then printError("Uso: mj setup server|terminal|pocket [lado] [jugador] [serverId] [origen]"); return end
-    local cfg={role=role,modemSide=args[3] or "left",channel=321,serverId=tonumber(args[5]) or 2,player=args[4] or "j0gar",inventorySource=args[6] or "right",apps=(role=="terminal" or role=="pocket") and {"inventory","logistics","todo"} or nil}
+    local cfg={role=role,modemSide=args[3] or "left",channel=321,serverId=tonumber(args[5]) or 2,player=args[4] or "j0gar_",inventorySource=args[6] or "right",apps=(role=="terminal" or role=="pocket") and {"inventory","logistics","todo"} or nil}
     local f=fs.open("/mjcore/data/node.lua","w"); f.write("return "..textutils.serialize(cfg)); f.close()
     print("Nodo configurado como "..role..". Reinicia con reboot.")
 elseif command == "version" then

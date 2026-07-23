@@ -1,6 +1,7 @@
 local network = dofile("/mjcore/core/network.lua")
 local node = dofile("/mjcore/core/node.lua")
 local config = dofile("/mjcore/core/config.lua")
+local updater = dofile("/mjcore/core/updater.lua")
 
 local W, H = term.getSize()
 local BG = colors.black
@@ -281,24 +282,85 @@ end
 
 
 local function logisticsMenu()
-    local state = request("logistics_status", {}, 4)
-    if not state then return end
-    local machine = (state.machines or {})[1]
-    header("LOGISTICA")
-    term.setCursorPos(2, 4)
-    term.setTextColor(state.active and GOOD or BAD)
-    print("Estado: " .. (state.active and "ACTIVA" or "INACTIVA"))
-    term.setTextColor(FG)
-    print("Storage: " .. (state.storageConnected and "Conectado" or "Desconectado"))
-    print("Maquina: " .. tostring(machine and machine.name or "Ninguna"))
-    print("Trabajo: " .. tostring(machine and machine.job or "En espera"))
-    print("Cola: " .. tostring(state.queue or 0))
-    print("Combustible: " .. tostring(machine and machine.fuel or 0) .. " carbon")
-    fill(H, BUTTON, "TOCA O ENTER", FG)
     while true do
-        local e, a = os.pullEvent()
-        if e == "mouse_click" or (e == "key" and (a == keys.enter or a == keys.backspace)) then return end
+        local state = request("logistics_status", {}, 4)
+        if not state then return end
+        local machines = state.machines or {}
+        local items = {}
+        for _, machine in ipairs(machines) do
+            items[#items+1] = {label=tostring(machine.name), value="machine", machine=machine}
+        end
+        items[#items+1] = {label="ATRAS", value="back"}
+        local choice, _, selected = menu("LOGISTICA", items, {backValue="back"})
+        if choice == "back" then return end
+        local machine = selected.machine
+        while machine do
+            local actions = {
+                {label="TRABAJO: "..tostring(machine.job or "En espera"), value="none"},
+                {label="COMBUSTIBLE: "..tostring(machine.fuel or 0), value="none"}
+            }
+            for _, setting in ipairs(machine.settings or {}) do
+                local value = tonumber((machine.config or {})[setting.key]) or 0
+                actions[#actions+1] = {label=setting.label..": "..value..tostring(setting.suffix or ""), value="setting", setting=setting, current=value}
+            end
+            actions[#actions+1] = {label="ATRAS", value="back"}
+            local action, _, entry = menu(machine.name, actions, {backValue="back"})
+            if action == "back" then break end
+            if action == "setting" then
+                local setting = entry.setting
+                local step = tonumber(setting.step) or 1
+                local current = entry.current
+                local change = menu(setting.label, {
+                    {label="- "..step, value=-step},
+                    {label="+ "..step, value=step},
+                    {label="ATRAS", value=false}
+                }, {backValue=false})
+                if change then
+                    local value = current + change
+                    value = math.max(tonumber(setting.min) or value, math.min(tonumber(setting.max) or value, value))
+                    local result, err = request("logistics_set_config", {id=machine.id,key=setting.key,value=value}, 4, true)
+                    if not result then message("LOGISTICA", tostring(err or "No se pudo guardar"), BAD)
+                    else
+                        message("LOGISTICA", setting.label..": "..tostring(value), GOOD)
+                        local refreshed = request("logistics_status", {}, 4, true)
+                        if refreshed then
+                            for _, candidate in ipairs(refreshed.machines or {}) do if candidate.id==machine.id then machine=candidate break end end
+                        end
+                    end
+                end
+            end
+        end
     end
+end
+
+local function updaterMenu()
+    header("ACTUALIZADOR")
+    term.setCursorPos(2, 5)
+    term.setTextColor(MUTED)
+    print("Comprobando GitHub...")
+    local status, err = updater.check()
+    if not status then message("ACTUALIZADOR", tostring(err or "No se pudo comprobar"), BAD); return end
+    local choice = menu("ACTUALIZADOR", {
+        {label="INSTALADA: "..status.current, value="none"},
+        {label="DISPONIBLE: "..status.latest, value="none"},
+        {label=status.available and "ACTUALIZAR AHORA" or "YA ESTA ACTUALIZADO", value=status.available and "install" or "none"},
+        {label="ATRAS", value="back"}
+    }, {backValue="back"})
+    if choice ~= "install" then return end
+    local confirm = menu("CONFIRMAR", {
+        {label="SI, ACTUALIZAR", value=true},
+        {label="NO", value=false}
+    }, {backValue=false})
+    if not confirm then return end
+    header("ACTUALIZANDO")
+    local ok, result = updater.install(function(i,total,path)
+        header("ACTUALIZANDO")
+        term.setCursorPos(2,5); term.setTextColor(FG)
+        print(("%d/%d"):format(i,total))
+        print(tostring(path):sub(1,math.max(1,W-2)))
+    end)
+    if not ok then message("ERROR", tostring(result), BAD); return end
+    header("ACTUALIZADOR"); term.setCursorPos(2,5); term.setTextColor(GOOD); print("Actualizado a "..tostring(result)); sleep(1); os.reboot()
 end
 
 local function networkMenu()
@@ -335,6 +397,7 @@ while true do
         {label = "INVENTARIO", value = "inventory"},
         {label = "LOGISTICA", value = "logistics"},
         {label = "ESTADO DE RED", value = "network"},
+        {label = "ACTUALIZAR", value = "updater"},
         {label = "REINICIAR POCKET", value = "reboot"},
         {label = "SALIR A CONSOLA", value = "exit"}
     }, {backValue = "exit"})
@@ -343,6 +406,7 @@ while true do
     elseif choice == "inventory" then inventoryMenu()
     elseif choice == "logistics" then logisticsMenu()
     elseif choice == "network" then networkMenu()
+    elseif choice == "updater" then updaterMenu()
     elseif choice == "reboot" then os.reboot()
     elseif choice == "exit" then
         header("CONSOLA")

@@ -107,14 +107,14 @@ return function(context)
 
         ui.center(m, 10, self.message, statusColor, t.background)
 
-        if self.state == "available" then
+        if self.state == "available" or self.state == "confirm" then
             local buttonW = math.min(28, w - 8)
             local buttonX = math.floor((w - buttonW) / 2) + 1
             local buttonY = 13
 
             ui.fill(m, buttonX, buttonY, buttonW, 5, t.accent)
-            ui.center(m, buttonY + 1, "INSTALAR AHORA", t.selectedText, t.accent)
-            ui.center(m, buttonY + 3, "Toca este boton", t.selectedText, t.accent)
+            ui.center(m, buttonY + 1, self.state == "confirm" and "CONFIRMAR" or "INSTALAR AHORA", t.selectedText, t.accent)
+            ui.center(m, buttonY + 3, self.state == "confirm" and "Toca otra vez" or "Toca este boton", t.selectedText, t.accent)
 
             self.installButton = {
                 x = buttonX,
@@ -159,11 +159,16 @@ return function(context)
     end
 
     function app:touch(x, y, ctx)
-        if self.state == "available" and self.installButton then
+        if (self.state == "available" or self.state == "confirm") and self.installButton then
             local b = self.installButton
             if x >= b.x and x < b.x + b.w
             and y >= b.y and y < b.y + b.h then
-                installUpdate(self, ctx)
+                if self.state == "available" then
+                    self.state = "confirm"
+                    self.message = "Confirma la actualizacion"
+                else
+                    installUpdate(self, ctx)
+                end
                 return
             end
         elseif self.state == "error" then
@@ -176,6 +181,9 @@ return function(context)
 
     function app:key(key, ctx)
         if key == keys.enter and self.state == "available" then
+            self.state = "confirm"
+            self.message = "Confirma la actualizacion"
+        elseif key == keys.enter and self.state == "confirm" then
             installUpdate(self, ctx)
         elseif key == keys.enter and self.state == "error" then
             checkForUpdates(self)

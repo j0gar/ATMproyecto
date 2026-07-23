@@ -138,6 +138,9 @@ local function runDesktop(entry, desktopIndex, desktopCount)
 
         buttons[#buttons + 1] = {id = "prev", x = 1, y = h, w = 8, h = 1}
         buttons[#buttons + 1] = {id = "next", x = w - 7, y = h, w = 8, h = 1}
+        if desktopIndex > 1 then
+            buttons[#buttons + 1] = {id = "quick_update", x = math.max(12, w - 22), y = 2, w = 11, h = 1}
+        end
     end
 
     local function drawCard(button)
@@ -195,7 +198,11 @@ local function runDesktop(entry, desktopIndex, desktopCount)
             desktopLabel = desktopLabel .. "/" .. tostring(desktopCount)
         end
         ui.write(monitor, 2, 2, desktopLabel, theme.muted, theme.topbar)
-        ui.write(monitor, w - #(monitorName) - 1, 2, ui.clip(monitorName, math.floor(w / 2)), theme.accent, theme.topbar)
+        if desktopIndex > 1 then
+            ui.write(monitor, math.max(12, w - 22), 2, "[ACTUALIZAR]", theme.accent, theme.topbar)
+        else
+            ui.write(monitor, w - #(monitorName) - 1, 2, ui.clip(monitorName, math.floor(w / 2)), theme.accent, theme.topbar)
+        end
         ui.write(monitor, 2, 3, "APLICACIONES", theme.muted, theme.desktop)
 
         for _, button in ipairs(buttons) do
@@ -246,6 +253,10 @@ local function runDesktop(entry, desktopIndex, desktopCount)
             if hit then
                 if hit.id == "app" then
                     launch(hit.entry)
+                elseif hit.id == "quick_update" then
+                    local updaterEntry
+                    for _, candidate in ipairs(appsCore.loadRegistry()) do if candidate.id == "updater" then updaterEntry = candidate break end end
+                    if updaterEntry then launch(updaterEntry) end
                 elseif hit.id == "prev" then
                     page = page - 1
                     if page < 1 then page = pages() end

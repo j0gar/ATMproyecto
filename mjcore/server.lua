@@ -1,6 +1,7 @@
 local network = dofile("/mjcore/core/network.lua")
 local logistics = dofile("/mjcore/core/logistics.lua")
 local logger = dofile("/mjcore/core/logger.lua")
+local machineConfig = dofile("/mjcore/core/machine_config.lua")
 
 local profiles = {j0gar="/mjcore/data/t-J0gar.lua",mia="/mjcore/data/t-Mia.lua"}
 local function loadTasks(id)
@@ -25,6 +26,27 @@ while true do
             local statusPath="/mjcore/data/logistics_state.lua"
             if fs.exists(statusPath) then local statusOk,status=pcall(dofile,statusPath); if statusOk then ok,result=true,status else ok=false; err=tostring(status) end
             else ok=false; err="Servicio de logistica sin estado" end
+        elseif msg.kind=="logistics_set_config" then
+            local p=msg.payload or {}
+            local machinePath="/mjcore/machines/"..tostring(p.id or "")..".lua"
+            if not fs.exists(machinePath) then ok=false; err="Maquina desconocida"
+            else
+                local machineOk,machine=pcall(dofile,machinePath)
+                if not machineOk or type(machine)~="table" then ok=false; err="Definicion de maquina invalida"
+                else
+                    local setting
+                    for _,entry in ipairs(machine.settings or {}) do if entry.key==p.key then setting=entry break end end
+                    if not setting then ok=false; err="Ajuste desconocido"
+                    else
+                        local value=tonumber(p.value)
+                        if not value then ok=false; err="Valor invalido"
+                        else
+                            value=math.max(tonumber(setting.min) or value,math.min(tonumber(setting.max) or value,value))
+                            result,err=machineConfig.set(machine,p.key,value); ok=result~=nil
+                        end
+                    end
+                end
+            end
         elseif msg.kind=="tasks_get" then result,err=loadTasks((msg.payload or {}).profile); ok=result~=nil
         elseif msg.kind=="tasks_toggle" then
             local p=msg.payload or {}; local data,path=loadTasks(p.profile)

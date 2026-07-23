@@ -1,6 +1,6 @@
 return {
-    version = "0.9.0",
-    codename = "Logistics Foundation",
+    version = "0.9.2",
+    codename = "Player Identity Fix",
 
     github = {
         owner = "j0gar",

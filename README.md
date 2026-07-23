@@ -1,4 +1,4 @@
-# M&J Core 0.9.0 — Logistics Foundation
+# M&J Core 0.9.2 — Player Identity Fix
 
 - Nueva API común de almacenamiento (`core/storage.lua`).
 - Separación entre almacenamiento, inventario del jugador y logística de máquinas.
@@ -54,7 +54,7 @@ Instalación:
 - Entrega al jugador mediante su Inventory Manager vinculado.
 
 Configuración rápida:
-- Principal: `mj setup server left j0gar 2 right`
+- Principal: `mj setup server left j0gar_ 2 right`
 - Secundario: `mj setup terminal left j0gar 2`
 
 El último argumento del servidor (`right`) es el lado, visto desde el Inventory Manager, donde está el inventario fuente. El Storage Controller debe estar accesible físicamente desde ese lado para `addItemToPlayer`.
@@ -79,7 +79,7 @@ La v0.8.5 incluye un cliente para Advanced Wireless Pocket Computer.
 Configuralo una vez con:
 
 ```
-mj setup pocket left j0gar 2
+mj setup pocket left j0gar_ 2
 reboot
 ```
 
@@ -94,3 +94,18 @@ Funciones iniciales:
 
 ## Pocket hibrida
 La Pocket usa botones tactiles para navegar y el teclado del juego para escribir tareas, busquedas y cantidades personalizadas. Tambien admite flechas, ENTER, rueda y teclas numericas.
+
+
+## v0.9.1 Logistics Controls
+
+- Configuracion dinamica de combustible por maquina.
+- Boton de actualizacion en Pocket y monitor secundario.
+- Confirmacion antes de instalar actualizaciones.
+- Configuracion persistente en `/mjcore/config/machines`.
+
+
+## v0.9.2 Player Identity Fix
+
+- Corrige el jugador del Inventory Manager de `j0gar` a `j0gar_`.
+- Migra en tiempo de ejecución configuraciones antiguas conservadas en `/mjcore/data/node.lua`.
+- Los nuevos nodos usan `j0gar_` por defecto.
