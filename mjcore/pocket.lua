@@ -2,6 +2,7 @@ local network = dofile("/mjcore/core/network.lua")
 local node = dofile("/mjcore/core/node.lua")
 local config = dofile("/mjcore/core/config.lua")
 local updater = dofile("/mjcore/core/updater.lua")
+local nodeConfig = dofile("/mjcore/core/node_config.lua")
 
 local W, H = term.getSize()
 local BG = colors.black
@@ -131,6 +132,54 @@ local function request(kind, payload, timeout, quiet)
     local result, err = network.request(kind, payload or {}, timeout or 5)
     if not result and not quiet then message("ERROR", tostring(err or "Sin respuesta"), BAD) end
     return result, err
+end
+
+
+local function managerList()
+    local result, err = request("inventory_managers", {}, 5, true)
+    if not result then return nil, err end
+
+    local items = {}
+    for _, entry in pairs(result.managers or {}) do
+        if entry.owner and tostring(entry.owner) ~= "" then
+            items[#items + 1] = {label = tostring(entry.owner), value = tostring(entry.owner)}
+        end
+    end
+    table.sort(items, function(a, b) return string.lower(a.label) < string.lower(b.label) end)
+    return items
+end
+
+local function selectPlayer(required)
+    while true do
+        local items, err = managerList()
+        if not items then
+            if required then
+                message("USUARIO", tostring(err or "No se pudo consultar el servidor"), BAD)
+            end
+            return false
+        end
+
+        if #items == 0 then
+            message("USUARIO", "No hay Inventory Manager detectados.", BAD)
+            return false
+        end
+
+        if not required then items[#items + 1] = {label = "ATRAS", value = false} end
+        local selected = menu("SELECCIONA USUARIO", items, {backValue = required and nil or false})
+        if selected then
+            local ok, saveErr = nodeConfig.setPlayer(node, selected)
+            if not ok then
+                message("USUARIO", tostring(saveErr), BAD)
+                return false
+            end
+            node.player = selected
+            node.identityConfigured = true
+            message("USUARIO", "Pocket vinculada a " .. tostring(selected), GOOD)
+            return true
+        elseif not required then
+            return false
+        end
+    end
 end
 
 local function chooseProfile()
@@ -391,12 +440,17 @@ if not ok then
     return
 end
 
+if node.identityConfigured ~= true then
+    selectPlayer(true)
+end
+
 while true do
     local choice = menu("MENU PRINCIPAL", {
         {label = "TAREAS", value = "tasks"},
         {label = "INVENTARIO", value = "inventory"},
         {label = "LOGISTICA", value = "logistics"},
         {label = "ESTADO DE RED", value = "network"},
+        {label = "CAMBIAR USUARIO", value = "player"},
         {label = "ACTUALIZAR", value = "updater"},
         {label = "REINICIAR POCKET", value = "reboot"},
         {label = "SALIR A CONSOLA", value = "exit"}
@@ -406,6 +460,7 @@ while true do
     elseif choice == "inventory" then inventoryMenu()
     elseif choice == "logistics" then logisticsMenu()
     elseif choice == "network" then networkMenu()
+    elseif choice == "player" then selectPlayer(false)
     elseif choice == "updater" then updaterMenu()
     elseif choice == "reboot" then os.reboot()
     elseif choice == "exit" then

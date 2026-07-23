@@ -1,4 +1,4 @@
-# M&J Core 0.9.2 — Player Identity Fix
+# M&J Core 0.9.3 — Multiuser Identity
 
 - Nueva API común de almacenamiento (`core/storage.lua`).
 - Separación entre almacenamiento, inventario del jugador y logística de máquinas.
@@ -104,7 +104,7 @@ La Pocket usa botones tactiles para navegar y el teclado del juego para escribir
 - Configuracion persistente en `/mjcore/config/machines`.
 
 
-## v0.9.2 Player Identity Fix
+## v0.9.3 Multiuser Identity
 
 - Corrige el jugador del Inventory Manager de `j0gar` a `j0gar_`.
 - Migra en tiempo de ejecución configuraciones antiguas conservadas en `/mjcore/data/node.lua`.

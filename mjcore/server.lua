@@ -19,6 +19,7 @@ while true do
     else
         local ok, result
         if msg.kind=="ping" then ok,result=true,{server=os.getComputerID()}
+        elseif msg.kind=="inventory_managers" then ok,result=true,{managers=logistics.getManagers()}
         elseif msg.kind=="inventory_scan" then result,err=logistics.scan(); ok=result~=nil
         elseif msg.kind=="inventory_deliver" then local p=msg.payload or {}; result,err=logistics.deliver(p.player,p.item,p.count); ok=result~=nil
         elseif msg.kind=="inventory_store_known" then local p=msg.payload or {}; result,err=logistics.storeKnown(p.player); ok=result~=nil

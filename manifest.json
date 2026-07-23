@@ -1,5 +1,5 @@
 {
-  "version": "0.9.2",
+  "version": "0.9.3",
   "files": [
     "startup.lua",
     "mj.lua",
@@ -60,7 +60,8 @@
     "mjcore/machines/emerald_furnace.lua",
     "mjcore/apps/logistics.lua",
     "mjcore/assets/icons/logistics.lua",
-    "mjcore/core/app_registry.lua"
+    "mjcore/core/app_registry.lua",
+    "mjcore/core/node_config.lua"
   ],
-  "codename": "Player Identity Fix"
+  "codename": "Multiuser Identity"
 }

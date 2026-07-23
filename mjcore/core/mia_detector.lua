@@ -33,9 +33,11 @@ local function normalizeBox(c1, c2)
         y = math.min(tonumber(c1.y) or 0, tonumber(c2.y) or 0),
         z = math.min(tonumber(c1.z) or 0, tonumber(c2.z) or 0)
     }, {
-        x = math.max(tonumber(c1.x) or 0, tonumber(c2.x) or 0),
-        y = math.max(tonumber(c1.y) or 0, tonumber(c2.y) or 0),
-        z = math.max(tonumber(c1.z) or 0, tonumber(c2.z) or 0)
+        -- La configuracion usa esquinas inclusivas. Advanced Peripherals
+        -- interpreta el segundo punto como exclusivo: [min, max).
+        x = math.max(tonumber(c1.x) or 0, tonumber(c2.x) or 0) + 1,
+        y = math.max(tonumber(c1.y) or 0, tonumber(c2.y) or 0) + 1,
+        z = math.max(tonumber(c1.z) or 0, tonumber(c2.z) or 0) + 1
     }
 end
 
@@ -119,33 +121,25 @@ function detector.sendDailyMessage()
     end
 
     local ok, result, err
+    local recipient = tostring(detector.config.playerName or DEFAULT_PLAYER_NAME)
+    recipient = recipient:gsub("^%s+", ""):gsub("%s+$", "")
+    if recipient == "" then recipient = DEFAULT_PLAYER_NAME end
 
-    -- Hay dos APIs distintas de Advanced Peripherals:
-    -- 0.7: sendMessageToPlayer(mensaje, jugador, prefijo, ...)
-    -- 0.8: sendMessage(mensaje, { player=..., prefix=... })
-    -- Si existen ambas, debemos priorizar sendMessageToPlayer: en la API
-    -- antigua sendMessage también existe, pero su segundo argumento debe ser
-    -- un texto/prefijo y no una tabla.
-    if type(detector.chatBox.sendMessageToPlayer) == "function" then
-        -- Llamada exacta comprobada en este servidor:
-        -- chatBox.sendMessageToPlayer(mensaje, "MiaWRaW")
-        local recipient = tostring(detector.config.playerName or DEFAULT_PLAYER_NAME)
-        recipient = recipient:gsub("^%s+", ""):gsub("%s+$", "")
-        if recipient == "" then recipient = DEFAULT_PLAYER_NAME end
-
-        ok, result, err = pcall(function()
-            return detector.chatBox.sendMessageToPlayer(message, recipient)
-        end)
-    elseif type(detector.chatBox.sendMessage) == "function" then
+    -- ATM10/1.21.1 usa la API nueva: sendMessage con options.player.
+    -- Conservamos fallback para instalaciones antiguas de Advanced Peripherals.
+    if type(detector.chatBox.sendMessage) == "function" then
         ok, result, err = pcall(
             detector.chatBox.sendMessage,
             message,
-            {
-                player = detector.config.playerName,
-                prefix = detector.config.chatPrefix or "M&J Core"
-            }
+            {player = recipient, prefix = detector.config.chatPrefix or "M&J Core"}
         )
-    else
+    end
+
+    if (not ok or result ~= true) and type(detector.chatBox.sendMessageToPlayer) == "function" then
+        ok, result, err = pcall(detector.chatBox.sendMessageToPlayer, message, recipient)
+    end
+
+    if ok == nil then
         detector.lastError = "La Chat Box no tiene un metodo compatible para enviar mensajes"
         return false, detector.lastError
     end
