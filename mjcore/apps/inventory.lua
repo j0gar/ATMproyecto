@@ -2,6 +2,7 @@ return function(context)
     local node = dofile("/mjcore/core/node.lua")
     local network = dofile("/mjcore/core/network.lua")
     local logistics = dofile("/mjcore/core/logistics.lua")
+    local playerContext = dofile("/mjcore/core/player_context.lua")
 
     local app = {
         id = "inventory",
@@ -13,7 +14,10 @@ return function(context)
         page = 1,
         pageSize = 8,
         buttons = {},
-        originalScale = context.config.textScale
+        originalScale = context.config.textScale,
+        player = node.player,
+        chooser = nil,
+        pending = nil
     }
 
     local amounts = {1, 16, 32, 64}
@@ -33,22 +37,31 @@ return function(context)
         return logistics.scan()
     end
 
-    local function deliver(item, count)
-        if node.role == "terminal" then
-            return network.request("inventory_deliver", {
-                player = node.player,
-                item = item.name,
-                count = count
-            }, 4)
+    local function resolvePlayer(self, pending)
+        if node.role ~= "terminal" then return node.player end
+        local player, err, players = playerContext.resolve(context.monitorName)
+        if player then self.player = player; return player end
+        if err == "multiple" then
+            self.chooser = players
+            self.pending = pending
+            return nil
         end
-        return logistics.deliver(node.player, item.name, count)
+        self.error = tostring(err)
+        return nil
     end
 
-    local function storeKnown()
+    local function deliver(player, item, count)
         if node.role == "terminal" then
-            return network.request("inventory_store_known", {player = node.player}, 6)
+            return network.request("inventory_deliver", {player=player,item=item.name,count=count}, 4)
         end
-        return logistics.storeKnown(node.player)
+        return logistics.deliver(player, item.name, count)
+    end
+
+    local function storeKnown(player)
+        if node.role == "terminal" then
+            return network.request("inventory_store_known", {player=player}, 6)
+        end
+        return logistics.storeKnown(player)
     end
 
     local function setMessage(self, text)
@@ -100,7 +113,22 @@ return function(context)
 
         ui.fill(m, 1, 1, w, 2, theme.topbar)
         ui.write(m, 2, 1, "INVENTARIO", theme.text, theme.topbar)
-        ui.write(m, math.max(1, w - #node.player - 1), 1, node.player, theme.accent, theme.topbar)
+        local shownPlayer = tostring(self.player or node.player or "")
+        ui.write(m, math.max(1, w - #shownPlayer - 1), 1, shownPlayer, theme.accent, theme.topbar)
+
+        if self.chooser then
+            ui.center(m, 4, "SELECCIONA DESTINATARIO", theme.accent, theme.background)
+            local y = 6
+            for _, player in ipairs(self.chooser) do
+                local label = "[ " .. player .. " ]"
+                local x = math.max(1, math.floor((w - #label) / 2) + 1)
+                ui.write(m, x, y, label, theme.text, theme.button)
+                self.buttons[#self.buttons + 1] = {id="choose_player",player=player,x=x,y=y,w=#label,h=1}
+                y = y + 2
+            end
+            self.buttons[#self.buttons + 1] = ui.closeButton(m, theme)
+            return
+        end
 
         if self.error then
             ui.center(m, math.floor(h / 2), ui.clip(self.error, w - 4), theme.danger, theme.background)
@@ -187,14 +215,30 @@ return function(context)
         for _, button in ipairs(self.buttons) do
             if inside(button, x, y) then
                 if button.id == "close" then
+                    if self.chooser then self.chooser=nil; self.pending=nil; return end
                     return "close"
+                elseif button.id == "choose_player" then
+                    local pending = self.pending
+                    local player = playerContext.select(context.monitorName, button.player, self.chooser)
+                    self.player = player
+                    self.chooser = nil
+                    self.pending = nil
+                    if pending and pending.kind == "take" then
+                        local result, err = deliver(player, pending.item, pending.count)
+                        if result then setMessage(self, "ENTREGADOS "..tostring(result.moved or 0)); refresh(self, true) else self.error=tostring(err) end
+                    elseif pending and pending.kind == "store" then
+                        local result, err = storeKnown(player)
+                        if result then setMessage(self, "GUARDADOS "..tostring(result.stored or 0).." | DEJADOS "..tostring(result.skipped or 0)); refresh(self, true) else self.error=tostring(err) end
+                    end
                 elseif button.id == "prev" then
                     self.page = math.max(1, self.page - 1)
                 elseif button.id == "next" then
                     local pages = math.max(1, math.ceil(#self.data.items / self.pageSize))
                     self.page = math.min(pages, self.page + 1)
                 elseif button.id == "take" then
-                    local result, err = deliver(button.item, button.count)
+                    local player = resolvePlayer(self, {kind="take",item=button.item,count=button.count})
+                    if not player then return end
+                    local result, err = deliver(player, button.item, button.count)
                     if result then
                         setMessage(self, "ENTREGADOS " .. tostring(result.moved or 0))
                         refresh(self, true)
@@ -202,7 +246,9 @@ return function(context)
                         self.error = tostring(err)
                     end
                 elseif button.id == "store" then
-                    local result, err = storeKnown()
+                    local player = resolvePlayer(self, {kind="store"})
+                    if not player then return end
+                    local result, err = storeKnown(player)
                     if result then
                         setMessage(self, "GUARDADOS " .. tostring(result.stored or 0) .. " | DEJADOS " .. tostring(result.skipped or 0))
                         refresh(self, true)

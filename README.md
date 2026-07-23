@@ -109,3 +109,22 @@ La Pocket usa botones tactiles para navegar y el teclado del juego para escribir
 - Corrige el jugador del Inventory Manager de `j0gar` a `j0gar_`.
 - Migra en tiempo de ejecución configuraciones antiguas conservadas en `/mjcore/data/node.lua`.
 - Los nuevos nodos usan `j0gar_` por defecto.
+
+
+## v0.9.5 Pocket Identity and Mia Messages
+
+- Los monitores resuelven el destinatario mediante Player Detector.
+- Si hay un jugador, lo seleccionan automaticamente.
+- Si hay varios, muestran un selector durante la accion.
+- La seleccion se recuerda 15 segundos mientras no cambien los jugadores detectados.
+- Cada Inventory Manager puede usar un lado distinto mediante `/mjcore/config/inventory_managers.lua`.
+- Valores iniciales: `j0gar_ = bottom`, `MiaWRaW = right`.
+
+
+## v0.9.5
+
+- Las Pocket siguen vinculadas al propietario configurado en `node.lua`; no existe un jugador fijo en el código.
+- Los monitores compartidos resuelven el jugador mediante Player Detector.
+- La detección personalizada de Mia usa `isPlayerInCoords` con fallback compatible.
+- Los mensajes privados para `MiaWRaW` usan la API de Chat Box 0.8 y soporte UTF-8.
+- Se mantiene compatibilidad con `sendMessageToPlayer` de Advanced Peripherals 0.7.

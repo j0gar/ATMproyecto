@@ -1,6 +1,7 @@
 local playerInventory = {}
 local node = dofile("/mjcore/core/node.lua")
 local storage = dofile("/mjcore/core/storage.lua")
+local managerConfigPath = "/mjcore/config/inventory_managers.lua"
 
 local function hasMethod(name, wanted)
     local ok, methods = pcall(peripheral.getMethods, name)
@@ -28,6 +29,15 @@ local function managers()
     return result
 end
 
+local function sourceFor(owner)
+    local ok, cfg = pcall(dofile, managerConfigPath)
+    if ok and type(cfg) == "table" then
+        local entry = cfg[string.lower(tostring(owner or ""))]
+        if type(entry) == "table" and entry.inventorySource then return entry.inventorySource end
+    end
+    return node.inventorySource
+end
+
 local function get(player)
     local all = managers()
     local entry = all[string.lower(tostring(player or ""))]
@@ -48,10 +58,11 @@ function playerInventory.deliver(player, itemName, count)
     local entry, err = get(player)
     if not entry then return nil, err end
     count = math.max(1, math.min(64, tonumber(count) or 1))
-    local ok, moved = pcall(entry.peripheral.addItemToPlayer, node.inventorySource, {name=itemName, count=count})
+    local source = sourceFor(entry.owner)
+    local ok, moved = pcall(entry.peripheral.addItemToPlayer, source, {name=itemName, count=count})
     if not ok then return nil, tostring(moved) end
     moved = tonumber(moved) or 0
-    if moved <= 0 then return nil, "No se pudo extraer el objeto; revisa inventorySource=" .. tostring(node.inventorySource) end
+    if moved <= 0 then return nil, "No se pudo extraer el objeto; revisa inventorySource=" .. tostring(source) end
     return {moved=moved, requested=count, player=entry.owner, item=itemName}
 end
 
@@ -65,7 +76,8 @@ function playerInventory.storeKnown(player)
     for _, item in ipairs(items or {}) do
         local known = storage.contains(item.name, item.nbt)
         if known then
-            local moveOk, moved = pcall(entry.peripheral.removeItemFromPlayer, node.inventorySource, {
+            local source = sourceFor(entry.owner)
+            local moveOk, moved = pcall(entry.peripheral.removeItemFromPlayer, source, {
                 name=item.name, fromSlot=item.slot, count=item.count
             })
             if moveOk then stored = stored + (tonumber(moved) or 0) end

@@ -1,6 +1,6 @@
 return {
-    version = "0.9.3",
-    codename = "Player Identity Fix",
+    version = "0.9.5",
+    codename = "Monitor Player Detection",
 
     github = {
         owner = "j0gar",

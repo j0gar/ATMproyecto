@@ -17,6 +17,7 @@ local detector = {
     lastCheck = 0,
     lastMessage = nil,
     lastError = nil,
+    lastDeliveryMethod = nil,
     initialized = false
 }
 
@@ -116,46 +117,72 @@ function detector.sendDailyMessage()
     detector.lastMessage = message
 
     if not detector.chatBox then
+        detector.chatBox = findChatBox()
+    end
+
+    if not detector.chatBox then
         detector.lastError = "No se ha encontrado Chat Box"
         return false, detector.lastError
     end
 
-    local ok, result, err
     local recipient = tostring(detector.config.playerName or DEFAULT_PLAYER_NAME)
     recipient = recipient:gsub("^%s+", ""):gsub("%s+$", "")
     if recipient == "" then recipient = DEFAULT_PLAYER_NAME end
 
-    -- ATM10/1.21.1 usa la API nueva: sendMessage con options.player.
-    -- Conservamos fallback para instalaciones antiguas de Advanced Peripherals.
+    local prefix = tostring(detector.config.chatPrefix or "M&J Core")
+    local errors = {}
+
+    -- Advanced Peripherals 0.8 / Minecraft 1.21.1.
+    -- El destinatario forma parte de options y utf8 permite los mensajes
+    -- personalizados con tildes, eñes y signos de apertura.
     if type(detector.chatBox.sendMessage) == "function" then
-        ok, result, err = pcall(
+        local callOk, result, apiError = pcall(
             detector.chatBox.sendMessage,
             message,
-            {player = recipient, prefix = detector.config.chatPrefix or "M&J Core"}
+            {
+                player = recipient,
+                prefix = prefix,
+                utf8 = true
+            }
         )
+
+        if callOk and result == true then
+            detector.lastError = nil
+            detector.lastDeliveryMethod = "sendMessage(options.player)"
+            return true
+        end
+
+        errors[#errors + 1] = tostring(apiError or result or "sendMessage rechazado")
     end
 
-    if (not ok or result ~= true) and type(detector.chatBox.sendMessageToPlayer) == "function" then
-        ok, result, err = pcall(detector.chatBox.sendMessageToPlayer, message, recipient)
+    -- Compatibilidad con Advanced Peripherals 0.7 y anteriores.
+    if type(detector.chatBox.sendMessageToPlayer) == "function" then
+        local callOk, result, apiError = pcall(
+            detector.chatBox.sendMessageToPlayer,
+            message,
+            recipient,
+            prefix,
+            "[]",
+            "&7",
+            nil,
+            true
+        )
+
+        if callOk and result == true then
+            detector.lastError = nil
+            detector.lastDeliveryMethod = "sendMessageToPlayer"
+            return true
+        end
+
+        errors[#errors + 1] = tostring(apiError or result or "sendMessageToPlayer rechazado")
     end
 
-    if ok == nil then
-        detector.lastError = "La Chat Box no tiene un metodo compatible para enviar mensajes"
-        return false, detector.lastError
+    if #errors == 0 then
+        errors[1] = "La Chat Box no tiene un metodo compatible"
     end
 
-    if not ok then
-        detector.lastError = tostring(result)
-        return false, detector.lastError
-    end
-
-    if result ~= true then
-        detector.lastError = tostring(err or result or "El Chat Box rechazo el mensaje")
-        return false, detector.lastError
-    end
-
-    detector.lastError = nil
-    return true
+    detector.lastError = table.concat(errors, " | ")
+    return false, detector.lastError
 end
 
 function detector.update(force)
@@ -189,21 +216,40 @@ function detector.update(force)
         detector.config.corner2 or {}
     )
 
-    local ok, players = pcall(detector.peripheral.getPlayersInCoords, pos1, pos2)
-    if not ok then
-        detector.inside = false
-        detector.lastError = tostring(players)
-        return false
+    local recipient = tostring(detector.config.playerName or DEFAULT_PLAYER_NAME)
+    recipient = recipient:gsub("^%s+", ""):gsub("%s+$", "")
+    if recipient == "" then recipient = DEFAULT_PLAYER_NAME end
+
+    local found = false
+    local detectionError = nil
+
+    -- Esta llamada compara el nombre de forma nativa y evita depender del
+    -- formato exacto de los elementos devueltos por getPlayersInCoords.
+    if type(detector.peripheral.isPlayerInCoords) == "function" then
+        local ok, result = pcall(detector.peripheral.isPlayerInCoords, pos1, pos2, recipient)
+        if ok then
+            found = result == true
+        else
+            detectionError = tostring(result)
+        end
     end
 
-    local wanted = string.lower(tostring(detector.config.playerName or "Mia"))
-    local found = false
+    -- Fallback para versiones donde solo existe getPlayersInCoords.
+    if type(detector.peripheral.isPlayerInCoords) ~= "function" or detectionError then
+        local ok, players = pcall(detector.peripheral.getPlayersInCoords, pos1, pos2)
+        if not ok then
+            detector.inside = false
+            detector.lastError = tostring(players)
+            return false
+        end
 
-    for _, player in ipairs(players or {}) do
-        local name = type(player) == "table" and (player.name or player.username) or player
-        if name and string.lower(tostring(name)) == wanted then
-            found = true
-            break
+        local wanted = string.lower(recipient)
+        for _, player in ipairs(players or {}) do
+            local name = type(player) == "table" and (player.name or player.username) or player
+            if name and string.lower(tostring(name)) == wanted then
+                found = true
+                break
+            end
         end
     end
 
@@ -234,6 +280,7 @@ function detector.status()
         hasChatBox = detector.chatBox ~= nil,
         message = detector.getMessage(),
         error = detector.lastError,
+        deliveryMethod = detector.lastDeliveryMethod,
         corner1 = pos1,
         corner2 = pos2,
         dayMode = detector.config.dayMode or "minecraft"
